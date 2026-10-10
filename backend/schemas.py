@@ -23,12 +23,26 @@ class UserOut(BaseModel):
 
     id: int
     email: EmailStr
+    is_verified: bool = False
     created_at: Optional[datetime] = None
 
 
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+class EmailRequest(BaseModel):
+    email: EmailStr
+
+
+class VerifyRequest(BaseModel):
+    email: EmailStr
+    code: str = Field(min_length=1, max_length=10)
+
+
+class MessageOut(BaseModel):
+    message: str
 
 
 # ---------- Tasks ----------

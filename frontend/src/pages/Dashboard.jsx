@@ -150,25 +150,25 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">{greeting()}{firstName ? `, ${firstName}` : ""}</h1>
+        <h1 className="text-3xl font-bold">{greeting()}{firstName ? `, ${firstName}` : ""}</h1>
         <p className="mt-1 text-muted">
           {new Date().toLocaleDateString([], { weekday: "long", day: "numeric", month: "long" })} &middot; {summary}
         </p>
       </div>
 
       {stats.next && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand/30 bg-brand/5 px-5 py-4">
+        <div className="sticker flex flex-wrap items-center justify-between gap-3 bg-sun px-5 py-4 text-on-sun">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-brand-ink">Up next</p>
-            <p className="mt-0.5 break-words font-semibold">{stats.next.title}</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-on-sun/70">Up next</p>
+            <p className="mt-0.5 break-words font-display text-lg font-semibold">{stats.next.title}</p>
             {stats.next.deadline && (
-              <p className="text-sm text-muted">
+              <p className="text-sm text-on-sun/70">
                 Due {new Date(stats.next.deadline).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
               </p>
             )}
           </div>
           <button onClick={() => handleToggle(stats.next)}
-            className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-dark">
+            className="btn rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white">
             Mark done
           </button>
         </div>
@@ -206,10 +206,10 @@ export default function Dashboard() {
       <div className="grid gap-6 lg:grid-cols-[1fr_16rem]">
         <section aria-label="Your tasks">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div role="tablist" className="flex gap-1 rounded-lg border border-line bg-surface p-1">
+            <div role="tablist" className="flex gap-1 rounded-xl border-2 border-edge bg-surface p-1">
               {STATUS_TABS.map((tab) => (
                 <button key={tab.id} role="tab" aria-selected={status === tab.id} onClick={() => setStatus(tab.id)}
-                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  className={`rounded-lg px-3 py-1.5 text-sm font-bold transition-colors ${
                     status === tab.id ? "bg-brand text-white" : "text-muted hover:text-ink"
                   }`}>
                   {tab.label}
@@ -235,7 +235,7 @@ export default function Dashboard() {
               {[0, 1, 2].map((i) => <div key={i} className="h-16 animate-pulse rounded-lg bg-line/60" />)}
             </div>
           ) : visible.length === 0 ? (
-            <p className="mt-4 rounded-lg border border-dashed border-line px-4 py-10 text-center text-muted">
+            <p className="mt-4 rounded-2xl border-2 border-dashed border-line px-4 py-10 text-center text-muted">
               {tasks.length === 0
                 ? "No tasks yet. Add your first assignment above."
                 : status === "open" && !subject

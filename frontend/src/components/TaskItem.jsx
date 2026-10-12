@@ -50,7 +50,7 @@ export default function TaskItem({ task, onToggle, onDelete, onEdit }) {
 
   if (editing) {
     return (
-      <li className="rounded-lg border border-brand/50 bg-surface px-4 py-3">
+      <li className="sticker-sm bg-surface px-4 py-3">
         <form onSubmit={save} onKeyDown={(e) => e.key === "Escape" && setEditing(false)} className="space-y-2">
           <label className="sr-only" htmlFor={`edit-title-${task.id}`}>Title</label>
           <input id={`edit-title-${task.id}`} autoFocus value={draft.title} maxLength={200}
@@ -65,7 +65,7 @@ export default function TaskItem({ task, onToggle, onDelete, onEdit }) {
             <div className="ml-auto flex gap-2">
               <button type="button" onClick={() => setEditing(false)}
                 className="rounded-md px-3 py-1.5 text-sm text-muted hover:text-ink">Cancel</button>
-              <button type="submit" className="rounded-md bg-brand px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-dark">
+              <button type="submit" className="btn rounded-xl bg-brand px-3 py-1.5 text-sm font-bold text-white">
                 Save
               </button>
             </div>
@@ -76,8 +76,8 @@ export default function TaskItem({ task, onToggle, onDelete, onEdit }) {
   }
 
   return (
-    <li className={`flex items-start gap-3 rounded-lg border bg-surface px-4 py-3 transition-colors ${
-      overdue ? "border-overdue/40 border-l-4 border-l-overdue" : "border-line"
+    <li className={`flex items-start gap-3 rounded-xl border-2 bg-surface px-4 py-3 transition-colors ${
+      overdue ? "border-overdue" : "border-line hover:border-brand/50"
     }`}>
       <CheckButton
         checked={task.completed}

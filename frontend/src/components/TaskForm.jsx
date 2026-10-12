@@ -31,7 +31,7 @@ export default function TaskForm({ subjects, onAdd, busy }) {
     setDeadline("");
   }
 
-  const field = "rounded-md border border-line bg-surface px-3 py-2";
+  const field = "border border-line bg-surface px-3 py-2";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
@@ -44,7 +44,7 @@ export default function TaskForm({ subjects, onAdd, busy }) {
           placeholder="Subject" maxLength={100} className={field} />
         <datalist id="subjects">{subjects.map((s) => <option key={s} value={s} />)}</datalist>
         <button type="submit" disabled={busy || !title.trim()}
-          className="rounded-md bg-brand px-5 py-2 font-semibold text-white transition-colors hover:bg-brand-dark disabled:opacity-50">
+          className="btn rounded-xl bg-brand px-5 py-2 font-bold text-white disabled:opacity-50">
           Add task
         </button>
       </div>

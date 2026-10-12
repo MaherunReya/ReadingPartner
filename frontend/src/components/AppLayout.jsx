@@ -22,15 +22,15 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-line bg-surface">
+      <header className="border-b-2 border-edge bg-surface">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
           <Link to="/dashboard" aria-label="Study Guide dashboard"><Logo /></Link>
           <nav className="flex gap-1" aria-label="Main">
             {LINKS.map((l) => (
               <NavLink key={l.to} to={l.to}
                 className={({ isActive }) =>
-                  `rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                    isActive ? "bg-brand/10 text-brand-ink" : "text-muted hover:text-ink"
+                  `rounded-full px-4 py-1.5 text-sm font-bold transition-colors ${
+                    isActive ? "bg-sun text-on-sun" : "text-muted hover:bg-paper hover:text-ink"
                   }`}>
                 {l.label}
               </NavLink>
@@ -40,7 +40,7 @@ export default function AppLayout() {
             <span className="hidden text-muted sm:inline">{me.data?.name || me.data?.email}</span>
             <ThemeToggle />
             <button onClick={handleLogout}
-              className="rounded-md border border-line bg-surface px-3 py-1.5 font-medium hover:bg-paper">
+              className="btn rounded-xl bg-surface px-3 py-1.5 font-bold">
               Log out
             </button>
           </div>

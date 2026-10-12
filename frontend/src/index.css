@@ -1,56 +1,128 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
-  --color-paper: #f4f6fa;
+  --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fredoka", "Nunito", ui-rounded, system-ui, sans-serif;
+
+  --color-paper: #f4f0ff;
   --color-surface: #ffffff;
-  --color-ink: #14213d;
-  --color-muted: #5b667a;
-  --color-line: #d9dfeb;
-  --color-brand: #3a5bd9;
-  --color-brand-dark: #2c47b0;
-  --color-brand-ink: #2c47b0;
-  --color-overdue: #c2364a;
-  --color-done: #2e8f63;
+  --color-ink: #1f1747;
+  --color-muted: #6b6590;
+  --color-line: #ddd6f5;
+  --color-edge: #1f1747;
+
+  --color-brand: #6d4aff;
+  --color-brand-dark: #5530e0;
+  --color-brand-ink: #5530e0;
+
+  --color-sun: #ffd43b;
+  --color-on-sun: #1f1747;
+  --color-pink: #ff8fb8;
+  --color-sky: #6fd3f5;
+  --color-mint: #7ee8c7;
+
+  --color-overdue: #d12b43;
+  --color-done: #068259;
 }
 
 /* Dark theme: overrides the same tokens when <html> has the "dark" class. */
 .dark {
   color-scheme: dark;
-  --color-paper: #0e1424;
-  --color-surface: #172036;
-  --color-ink: #e8ecf5;
-  --color-muted: #9aa6bd;
-  --color-line: #2a3550;
-  --color-brand-ink: #a9b9ff;
-  --color-overdue: #ff7a8c;
-  --color-done: #5fcf9b;
+  --color-paper: #120e2b;
+  --color-surface: #1d1745;
+  --color-ink: #f1eeff;
+  --color-muted: #a9a3cf;
+  --color-line: #34296b;
+  --color-edge: #5a4db8;
+  --color-brand-ink: #b9a6ff;
+  --color-overdue: #ff7a90;
 }
+
+html { scroll-behavior: smooth; }
+section[id] { scroll-margin-top: 5rem; }
 
 body {
   background-color: var(--color-paper);
+  background-image: radial-gradient(var(--color-line) 1.3px, transparent 1.3px);
+  background-size: 24px 24px;
   color: var(--color-ink);
   font-family: var(--font-sans);
 }
 
+h1, h2, h3, .font-display { font-family: var(--font-display); }
+
+::selection { background: var(--color-sun); color: var(--color-on-sun); }
+
 :focus-visible {
-  outline: 2px solid var(--color-brand);
+  outline: 3px solid var(--color-brand);
   outline-offset: 2px;
 }
 
-/* ruled notebook paper, used on the auth screen */
-.ruled {
-  background-color: var(--color-surface);
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent 35px,
-    var(--color-line) 35px,
-    var(--color-line) 36px
-  );
+/* Chunkier, friendlier form fields everywhere */
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  border-width: 2px;
+  border-radius: 0.75rem;
+  transition: border-color 0.15s;
+}
+input:not([type="checkbox"]):not([type="radio"]):focus,
+select:focus,
+textarea:focus {
+  border-color: var(--color-brand);
 }
 
+@layer components {
+  /* "Sticker" look: thick outline and a hard offset shadow */
+  .sticker {
+    border: 2px solid var(--color-edge);
+    border-radius: 1rem;
+    box-shadow: 4px 4px 0 var(--color-edge);
+  }
+  .sticker-sm {
+    border: 2px solid var(--color-edge);
+    border-radius: 0.875rem;
+    box-shadow: 3px 3px 0 var(--color-edge);
+  }
+  /* Pressable button that lifts on hover and squishes on click */
+  .btn {
+    border: 2px solid var(--color-edge);
+    box-shadow: 3px 3px 0 var(--color-edge);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.15s;
+  }
+  .btn:hover:not(:disabled) {
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0 var(--color-edge);
+  }
+  .btn:active:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 var(--color-edge);
+  }
+  .btn:disabled { box-shadow: none; }
+  /* Notebook paper, used on the auth screen and hero card */
+  .ruled {
+    background-color: var(--color-surface);
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 35px,
+      var(--color-line) 35px,
+      var(--color-line) 36px
+    );
+  }
+  .highlight {
+    background-image: linear-gradient(transparent 58%, var(--color-sun) 58%, var(--color-sun) 92%, transparent 92%);
+    color: var(--color-ink);
+    padding: 0 0.15em;
+  }
+  .dark .highlight { color: var(--color-on-sun); background-image: linear-gradient(var(--color-sun), var(--color-sun)); border-radius: 0.3em; }
+}
+
+@keyframes marquee { to { transform: translateX(-50%); } }
+.marquee { animation: marquee 32s linear infinite; }
+
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
   *, *::before, *::after {
     animation: none !important;
     transition: none !important;

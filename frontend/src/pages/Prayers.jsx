@@ -7,7 +7,7 @@ import {
   nextPrayer, saveSettings, untilText, useNow, usePrayerLogs, usePrayerTimes, useTogglePrayer,
 } from "../prayers";
 
-const field = "mt-1 w-full rounded-md border border-line bg-surface px-3 py-2";
+const field = "mt-1 w-full border border-line bg-surface px-3 py-2";
 
 function SettingsForm({ settings, onSave, onCancel }) {
   const [draft, setDraft] = useState(settings);
@@ -44,7 +44,7 @@ function SettingsForm({ settings, onSave, onCancel }) {
         </select>
       </div>
       <div className="flex gap-2 sm:col-span-2">
-        <button type="submit" className="rounded-md bg-brand px-4 py-2 font-semibold text-white hover:bg-brand-dark">Save</button>
+        <button type="submit" className="btn rounded-xl bg-brand px-4 py-2 font-bold text-white">Save</button>
         <button type="button" onClick={onCancel} className="rounded-md px-4 py-2 text-muted hover:text-ink">Cancel</button>
       </div>
     </form>
@@ -84,7 +84,7 @@ export default function Prayers() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Prayer tracker</h1>
+          <h1 className="text-3xl font-bold">Prayer tracker</h1>
           <p className="mt-1 text-muted">
             {now.toLocaleDateString([], { weekday: "long", day: "numeric", month: "long" })}
             {timesQuery.data?.hijri && <> &middot; {timesQuery.data.hijri}</>}
@@ -92,7 +92,7 @@ export default function Prayers() {
           </p>
         </div>
         <button onClick={() => setEditing((v) => !v)} aria-expanded={editing}
-          className="rounded-md border border-line bg-surface px-3 py-1.5 text-sm font-medium hover:bg-paper">
+          className="btn rounded-xl bg-surface px-3 py-1.5 text-sm font-bold">
           Location &amp; method
         </button>
       </div>
@@ -111,20 +111,20 @@ export default function Prayers() {
       )}
 
       {next && (
-        <div className="rounded-xl border border-brand/30 bg-brand/5 px-5 py-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-brand-ink">Next prayer</p>
-          <p className="mt-0.5 text-xl font-bold">
-            {next.label} <span className="font-medium text-muted">at {formatTime(times[next.id])}{next.tomorrow ? " tomorrow" : ""}</span>
+        <div className="sticker bg-sun px-5 py-4 text-on-sun">
+          <p className="text-xs font-bold uppercase tracking-wide text-on-sun/70">Next prayer</p>
+          <p className="mt-0.5 font-display text-2xl font-bold">
+            {next.label} <span className="font-medium text-on-sun/70">at {formatTime(times[next.id])}{next.tomorrow ? " tomorrow" : ""}</span>
           </p>
-          <p className="text-sm text-muted">in {untilText(next.at, now)}</p>
+          <p className="text-sm text-on-sun/70">in {untilText(next.at, now)}</p>
         </div>
       )}
 
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {stats.map((s) => (
-          <div key={s.label} className="rounded-xl border border-line bg-surface px-4 py-3">
+          <div key={s.label} className="sticker-sm bg-surface px-4 py-3">
             <dt className="text-sm text-muted">{s.label}</dt>
-            <dd className="text-2xl font-bold">{s.value}</dd>
+            <dd className="font-display text-2xl font-bold">{s.value}</dd>
           </div>
         ))}
       </dl>

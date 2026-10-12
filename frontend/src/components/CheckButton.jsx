@@ -8,7 +8,7 @@ export default function CheckButton({ checked, onClick, label, disabled = false,
       disabled={disabled}
       onClick={onClick}
       className={`flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-150 active:scale-90 disabled:opacity-40 ${
-        checked ? "border-done bg-done text-white" : "border-line hover:border-brand"
+        checked ? "border-done bg-done text-white" : "border-muted/50 hover:border-brand"
       } ${className}`}
     >
       {checked && (

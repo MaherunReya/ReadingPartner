@@ -11,9 +11,9 @@ const SAMPLE = [
   { title: "Thesis: related work draft", subject: "Thesis", due: "Due in 6 days" },
 ];
 
-const input = "mt-1 w-full rounded-md border border-line bg-surface px-3 py-2";
+const input = "mt-1 w-full border border-line bg-surface px-3 py-2";
 const primary =
-  "w-full rounded-md bg-brand px-4 py-2.5 font-semibold text-white hover:bg-brand-dark disabled:opacity-60";
+  "btn w-full rounded-xl bg-brand px-4 py-2.5 font-bold text-white disabled:opacity-60";
 
 export default function AuthPage({ mode }) {
   const isLogin = mode === "login";

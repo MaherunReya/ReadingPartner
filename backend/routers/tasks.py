@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
@@ -75,6 +76,8 @@ def update_task(
         raise HTTPException(status_code=422, detail="title and completed cannot be null")
     for field, value in updates.items():
         setattr(task, field, value)
+    if "completed" in updates:
+        task.completed_at = datetime.now(timezone.utc) if updates["completed"] else None
     db.commit()
     db.refresh(task)
     return task

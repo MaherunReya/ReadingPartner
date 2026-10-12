@@ -6,11 +6,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 import models  # noqa: F401  (registers tables on Base)
 from database import Base, engine
-from routers import auth, tasks
+from routers import auth, prayers, tasks
 
 load_dotenv()
 
-app = FastAPI(title="Study Guide API")
+app = FastAPI(title="AI Study OS API")
 
 origins = [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",") if o.strip()]
 app.add_middleware(
@@ -26,8 +26,9 @@ Base.metadata.create_all(bind=engine)
 
 app.include_router(auth.router)
 app.include_router(tasks.router)
+app.include_router(prayers.router)
 
 
 @app.get("/")
 def root():
-    return {"message": "Study guide backend is running"}
+    return {"message": "Study Guide backend is running"}

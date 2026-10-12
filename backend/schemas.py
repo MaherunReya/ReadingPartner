@@ -1,13 +1,23 @@
+import datetime as dt
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 
 # ---------- Auth ----------
 class UserCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
     email: EmailStr
     password: str = Field(min_length=8)
+
+    @field_validator("name")
+    @classmethod
+    def name_not_blank(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("Name is required")
+        return v
 
     @field_validator("password")
     @classmethod
@@ -22,6 +32,7 @@ class UserOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    name: Optional[str] = None
     email: EmailStr
     is_verified: bool = False
     created_at: Optional[datetime] = None
@@ -70,5 +81,27 @@ class TaskOut(BaseModel):
     subject: Optional[str] = None
     deadline: Optional[datetime] = None
     completed: bool
+    completed_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+
+
+# ---------- Prayers ----------
+PrayerName = Literal["fajr", "dhuhr", "asr", "maghrib", "isha"]
+
+
+class PrayerToggle(BaseModel):
+    completed: bool
+
+
+class PrayerLogOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    date: dt.date
+    prayer: PrayerName
+
+
+class PrayerState(BaseModel):
+    date: dt.date
+    prayer: PrayerName
+    completed: bool

@@ -105,3 +105,18 @@ class PrayerState(BaseModel):
     date: dt.date
     prayer: PrayerName
     completed: bool
+
+
+# ---------- Focus sessions ----------
+class FocusSessionCreate(BaseModel):
+    minutes: int = Field(ge=1, le=180)
+    subject: Optional[str] = Field(default=None, max_length=100)
+
+
+class FocusSessionOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    minutes: int
+    subject: Optional[str] = None
+    completed_at: datetime

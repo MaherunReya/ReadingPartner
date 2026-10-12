@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 import models  # noqa: F401  (registers tables on Base)
 from database import Base, engine
-from routers import auth, prayers, tasks
+from routers import auth, focus, prayers, tasks
 
 load_dotenv()
 
@@ -27,6 +27,7 @@ Base.metadata.create_all(bind=engine)
 app.include_router(auth.router)
 app.include_router(tasks.router)
 app.include_router(prayers.router)
+app.include_router(focus.router)
 
 
 @app.get("/")

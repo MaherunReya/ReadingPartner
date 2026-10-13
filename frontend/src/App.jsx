@@ -4,7 +4,7 @@ import AppLayout from "./components/AppLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
-import Focus from "./pages/Focus";
+import FocusPage from "./pages/FocusPage";
 import Home from "./pages/Home";
 import Prayers from "./pages/Prayers";
 
@@ -21,7 +21,7 @@ export default function App() {
       <Route path="/signup" element={<GuestRoute><AuthPage key="signup" mode="signup" /></GuestRoute>} />
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/focus" element={<Focus />} />
+        <Route path="/focus" element={<FocusPage />} />
         <Route path="/prayers" element={<Prayers />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

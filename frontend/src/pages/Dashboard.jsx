@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import api, { errorMessage } from "../api";
 import Card from "../components/Card";
 import PrayerToday from "../components/PrayerToday";
@@ -167,10 +168,16 @@ export default function Dashboard() {
               </p>
             )}
           </div>
-          <button onClick={() => handleToggle(stats.next)}
-            className="btn rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white">
-            Mark done
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <Link to={`/focus?task=${stats.next.id}`}
+              className="btn rounded-xl bg-surface px-4 py-2 text-sm font-bold text-ink">
+              Focus on this
+            </Link>
+            <button onClick={() => handleToggle(stats.next)}
+              className="btn rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white">
+              Mark done
+            </button>
+          </div>
         </div>
       )}
 

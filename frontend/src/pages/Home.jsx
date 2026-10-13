@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../auth";
-import Logo from "../components/Logo";
+import LogoLink from "../components/LogoLink";
 import ProgressRing from "../components/ProgressRing";
 import ThemeToggle from "../components/ThemeToggle";
 
@@ -18,12 +18,11 @@ const FEATURES = [
     body: "Prayer times for your city, a five-prayer checklist, a weekly grid and a full-day streak, right beside your study plan." },
   { icon: "\uD83C\uDFAF", tint: "bg-sun", title: "One clear next step",
     body: "The dashboard always shows what to do next. Tick it off in one tap and move on." },
-  { icon: "\uD83C\uDF19", tint: "bg-sky", title: "Light and dark",
-    body: "Easy on the eyes at 2 a.m. Flip the theme with a single tap, and it remembers your choice." },
+  { icon: "\uD83C\uDF45", tint: "bg-sky", title: "Pomodoro focus timer",
+    body: "Work in focused rounds with breaks in between. Link a round to a task and see how many minutes you've put in." },
 ];
 
 const SOON = [
-  { icon: "\u23F1\uFE0F", title: "Focus timer", body: "Pomodoro sessions that count toward your streak." },
   { icon: "\uD83E\uDD16", title: "AI study planner", body: "A plan built around your exam dates, your energy and your prayer times." },
   { icon: "\uD83D\uDCDD", title: "Notes", body: "Short notes that live next to each subject." },
 ];
@@ -158,7 +157,7 @@ export default function Home() {
     <div className="min-h-screen overflow-x-clip">
       <header className="sticky top-0 z-40 border-b-2 border-edge bg-paper/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-3">
-          <Link to="/" aria-label="Study Guide home" className="mr-4"><Logo /></Link>
+          <LogoLink className="mr-4" />
           <nav className="flex flex-1 items-center gap-1" aria-label="Sections">
             <a href="#features" className={navLink}>Features</a>
             <a href="#how" className={navLink}>How it works</a>
@@ -238,7 +237,7 @@ export default function Home() {
           </div>
 
           <h3 className="mt-20 text-center text-2xl font-semibold">Coming soon</h3>
-          <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          <div className="mx-auto mt-6 grid max-w-3xl gap-4 sm:grid-cols-2">
             {SOON.map((s) => (
               <div key={s.title} className="rounded-2xl border-2 border-dashed border-edge p-5">
                 <p className="flex items-center gap-2 font-display text-lg font-semibold">
@@ -311,7 +310,7 @@ export default function Home() {
       </main>
 
       <footer className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-8 text-sm text-muted">
-        <Logo className="text-ink" />
+        <LogoLink className="text-ink" />
         <nav className="flex gap-4 font-bold" aria-label="Footer">
           <a href="#features" className="hover:text-ink">Features</a>
           <a href="#how" className="hover:text-ink">How it works</a>

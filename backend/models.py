@@ -53,12 +53,12 @@ class PrayerLog(Base):
 
 
 class FocusSession(Base):
-    """One row = one finished focus (Pomodoro) session."""
+    """One completed Pomodoro focus session."""
 
     __tablename__ = "focus_sessions"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    task_id = Column(Integer, ForeignKey("tasks.id", ondelete="SET NULL"), nullable=True)
     minutes = Column(Integer, nullable=False)
-    subject = Column(String(100), nullable=True)
     completed_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)

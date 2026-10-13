@@ -1,8 +1,9 @@
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "../api";
+import { FocusProvider, MODES, formatClock, useFocus } from "../focusTimer";
 import { useAuth } from "../auth";
-import Logo from "./Logo";
+import LogoLink from "./LogoLink";
 import ThemeToggle from "./ThemeToggle";
 
 const LINKS = [
@@ -11,7 +12,19 @@ const LINKS = [
   { to: "/prayers", label: "Prayers" },
 ];
 
-export default function AppLayout() {
+function TimerChip() {
+  const { timer, remainingMs } = useFocus();
+  const { pathname } = useLocation();
+  if (timer.status === "idle" || pathname === "/focus") return null;
+  return (
+    <Link to="/focus" className="sticker-sm bg-sun px-3 py-1 text-sm font-bold tabular-nums text-on-sun"
+      aria-label={`${MODES[timer.mode].label} timer: ${formatClock(remainingMs)} left`}>
+      <span aria-hidden="true">{"\uD83C\uDF45"}</span> {formatClock(remainingMs)}
+    </Link>
+  );
+}
+
+function Shell() {
   const { logout } = useAuth();
   const queryClient = useQueryClient();
   const me = useQuery({ queryKey: ["me"], queryFn: () => api.get("/auth/me").then((r) => r.data) });
@@ -25,7 +38,7 @@ export default function AppLayout() {
     <div className="min-h-screen">
       <header className="border-b-2 border-edge bg-surface">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
-          <Link to="/dashboard" aria-label="Study Guide dashboard"><Logo /></Link>
+          <LogoLink />
           <nav className="flex gap-1" aria-label="Main">
             {LINKS.map((l) => (
               <NavLink key={l.to} to={l.to}
@@ -38,6 +51,7 @@ export default function AppLayout() {
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-3 text-sm">
+            <TimerChip />
             <span className="hidden text-muted sm:inline">{me.data?.name || me.data?.email}</span>
             <ThemeToggle />
             <button onClick={handleLogout}
@@ -51,5 +65,14 @@ export default function AppLayout() {
         <Outlet />
       </main>
     </div>
+  );
+}
+
+export default function AppLayout() {
+  // The provider lives here so a running timer keeps going while you move between pages.
+  return (
+    <FocusProvider>
+      <Shell />
+    </FocusProvider>
   );
 }

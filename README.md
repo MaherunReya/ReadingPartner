@@ -1,4 +1,4 @@
-# AI Study OS
+# Study Guide
 
 A full-stack study tracker for university students: deadlines, subject progress, streaks, and a daily prayer tracker in one dashboard.
 

@@ -107,16 +107,16 @@ class PrayerState(BaseModel):
     completed: bool
 
 
-# ---------- Focus sessions ----------
-class FocusSessionCreate(BaseModel):
-    minutes: int = Field(ge=1, le=180)
-    subject: Optional[str] = Field(default=None, max_length=100)
+# ---------- Focus timer ----------
+class FocusCreate(BaseModel):
+    minutes: int = Field(ge=1, le=240)
+    task_id: Optional[int] = None
 
 
-class FocusSessionOut(BaseModel):
+class FocusOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     minutes: int
-    subject: Optional[str] = None
+    task_id: Optional[int] = None
     completed_at: datetime

@@ -117,7 +117,7 @@ Open `http://localhost:5173`. To point at a different backend, set `VITE_API_URL
 
 - [ ] Focus timer (Pomodoro sessions counted toward streaks)
 - [ ] Notes per subject
-- [ ] AI study planner built around exam dates and prayer times
+- [ ] Study planner built around exam dates and prayer times
 - [ ] Alembic migrations (currently `create_all`)
 - [ ] Installable PWA
 

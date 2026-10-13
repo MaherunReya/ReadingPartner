@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import api from "../api";
 import Card from "../components/Card";
 import TimerRing from "../components/TimerRing";
+import TimerTomato from "../components/TimerTomato";
 import WeekChart from "../components/WeekChart";
 import { lastNDays, toISODate } from "../dates";
 import { MODES, formatClock, useFocus, useFocusSessions } from "../focusTimer";
@@ -127,7 +128,8 @@ export default function FocusPage() {
 
           <div className="mt-8">
             <TimerRing progress={progress} color={ringColor}>
-              <span className="font-display text-6xl font-bold tabular-nums" role="timer" aria-live="off">
+            <TimerTomato progress={progress} status={timer.status} mode={timer.mode} />
+              <span className="font-display text-5xl font-bold tabular-nums" role="timer" aria-live="off">
                 {formatClock(f.remainingMs)}
               </span>
               <span className="mt-1 text-sm font-bold text-muted">

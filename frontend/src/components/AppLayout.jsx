@@ -10,6 +10,8 @@ const LINKS = [
   { to: "/dashboard", label: "Dashboard" },
   { to: "/focus", label: "Focus" },
   { to: "/prayers", label: "Prayers" },
+  { to: "/flashcards", label: "Flashcards" },
+  { to: "/chat", label: "Study buddy" },
 ];
 
 function TimerChip() {

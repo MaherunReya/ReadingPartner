@@ -2,7 +2,7 @@ import datetime as dt
 from datetime import datetime
 from typing import Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 
 # ---------- Auth ----------
@@ -120,3 +120,128 @@ class FocusOut(BaseModel):
     minutes: int
     task_id: Optional[int] = None
     completed_at: datetime
+
+
+# ---------- Notes ----------
+NoteColor = Literal["sun", "pink", "sky", "mint"]
+
+
+class NoteCreate(BaseModel):
+    title: str = Field(default="", max_length=200)
+    content: str = Field(default="", max_length=20000)
+    subject: Optional[str] = Field(default=None, max_length=100)
+    color: NoteColor = "sun"
+    pinned: bool = False
+
+    @model_validator(mode="after")
+    def not_blank(self):
+        if not self.title.strip() and not self.content.strip():
+            raise ValueError("Write a title or some text")
+        return self
+
+
+class NoteUpdate(BaseModel):
+    title: Optional[str] = Field(default=None, max_length=200)
+    content: Optional[str] = Field(default=None, max_length=20000)
+    subject: Optional[str] = Field(default=None, max_length=100)
+    color: Optional[NoteColor] = None
+    pinned: Optional[bool] = None
+
+
+class NoteOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: str
+    content: str
+    subject: Optional[str] = None
+    color: NoteColor
+    pinned: bool
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+# ---------- Mood check-ins ----------
+MoodTag = Literal["energized", "calm", "focused", "motivated", "tired", "stressed", "distracted", "overwhelmed"]
+
+
+class MoodSet(BaseModel):
+    mood: int = Field(ge=1, le=5)
+    tags: list[MoodTag] = Field(default_factory=list, max_length=8)
+    note: Optional[str] = Field(default=None, max_length=500)
+
+
+class MoodOut(BaseModel):
+    date: dt.date
+    mood: int
+    tags: list[MoodTag]
+    note: Optional[str] = None
+
+
+# ---------- Flashcards ----------
+DeckColor = Literal["sun", "pink", "sky", "mint"]
+
+
+def _not_blank(v: str) -> str:
+    v = v.strip()
+    if not v:
+        raise ValueError("This can't be empty")
+    return v
+
+
+class DeckCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    subject: Optional[str] = Field(default=None, max_length=100)
+    color: DeckColor = "sun"
+
+    _name = field_validator("name")(_not_blank)
+
+
+class DeckUpdate(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=1, max_length=100)
+    subject: Optional[str] = Field(default=None, max_length=100)
+    color: Optional[DeckColor] = None
+
+
+class DeckOut(BaseModel):
+    id: int
+    name: str
+    subject: Optional[str] = None
+    color: DeckColor
+    card_count: int
+    due_count: int
+    mastered_count: int
+    created_at: Optional[datetime] = None
+
+
+class CardCreate(BaseModel):
+    front: str = Field(min_length=1, max_length=2000)
+    back: str = Field(min_length=1, max_length=2000)
+
+    _front = field_validator("front")(_not_blank)
+    _back = field_validator("back")(_not_blank)
+
+
+class CardUpdate(BaseModel):
+    front: Optional[str] = Field(default=None, min_length=1, max_length=2000)
+    back: Optional[str] = Field(default=None, min_length=1, max_length=2000)
+
+
+class CardBulk(BaseModel):
+    cards: list[CardCreate] = Field(min_length=1, max_length=200)
+
+
+class CardOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    deck_id: int
+    front: str
+    back: str
+    box: int
+    due_at: datetime
+    reviews: int
+
+
+class ReviewIn(BaseModel):
+    correct: bool

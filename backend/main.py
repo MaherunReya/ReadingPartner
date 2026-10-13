@@ -1,12 +1,11 @@
 import os
-
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 import models  # noqa: F401  (registers tables on Base)
 from database import Base, engine
-from routers import auth, focus, prayers, tasks
+from routers import ai, auth, flashcards, focus, mood, notes, prayers, tasks
 
 load_dotenv()
 
@@ -28,6 +27,10 @@ app.include_router(auth.router)
 app.include_router(tasks.router)
 app.include_router(prayers.router)
 app.include_router(focus.router)
+app.include_router(notes.router)
+app.include_router(mood.router)
+app.include_router(flashcards.router)
+app.include_router(ai.router)
 
 
 @app.get("/")

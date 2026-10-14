@@ -55,7 +55,7 @@ function NewDeckForm({ onDone, onCancel }) {
         <p className="text-xs text-muted">Next step: upload your lecture or paste its notes to make flashcards.</p>
         <div className="flex flex-wrap items-center gap-3">
           <button type="submit" disabled={!name.trim() || create.isPending}
-            className="btn rounded-xl bg-brand px-5 py-2 font-display font-semibold text-white disabled:opacity-50">
+            className="btn rounded-xl bg-brand px-5 py-2 font-display font-semibold text-on-sun disabled:opacity-50">
             Add lecture
           </button>
           <button type="button" onClick={onCancel} className="rounded-xl px-3 py-2 font-bold text-muted hover:text-ink">Cancel</button>
@@ -98,7 +98,7 @@ function DeckTile({ deck, onOpen, onStudy }) {
         </div>
         <div className="mt-auto flex gap-2">
           <button onClick={() => onStudy(deck.id, mode)} disabled={deck.card_count === 0}
-            className="btn flex-1 rounded-xl bg-brand px-3 py-2 text-sm font-bold text-white disabled:opacity-50">
+            className="btn flex-1 rounded-xl bg-brand px-3 py-2 text-sm font-bold text-on-sun disabled:opacity-50">
             {deck.card_count === 0 ? "Add cards first" : deck.due_count > 0 ? `Study ${deck.due_count} due` : "Practice all"}
           </button>
           <button onClick={() => onOpen(deck.id)} className="btn rounded-xl bg-surface px-3 py-2 text-sm font-bold">Edit</button>
@@ -161,7 +161,7 @@ function BoxDots({ box }) {
   return (
     <span className="inline-flex items-center gap-0.5" title={`Box ${box} of 5`} aria-label={`Box ${box} of 5`}>
       {[1, 2, 3, 4, 5].map((n) => (
-        <span key={n} className={`size-1.5 rounded-full ${n <= box ? "bg-brand" : "bg-[#1f1747]/20"}`} />
+        <span key={n} className={`size-1.5 rounded-full ${n <= box ? "bg-brand" : "bg-edge/30"}`} />
       ))}
     </span>
   );
@@ -193,7 +193,7 @@ function CardRow({ card, deckId, index = 0 }) {
           <textarea aria-label="Back" rows={2} maxLength={2000} value={back} onChange={(e) => setBack(e.target.value)}
             className="w-full resize-y border border-line bg-surface px-3 py-2" />
           <div className="flex items-center gap-2">
-            <button type="submit" disabled={update.isPending} className="btn rounded-xl bg-brand px-4 py-1.5 text-sm font-bold text-white">Save</button>
+            <button type="submit" disabled={update.isPending} className="btn rounded-xl bg-brand px-4 py-1.5 text-sm font-bold text-on-sun">Save</button>
             <button type="button" onClick={() => { setEditing(false); setFront(card.front); setBack(card.back); }}
               className="px-3 py-1.5 text-sm font-bold text-muted hover:text-ink">Cancel</button>
             {update.isError && <span role="alert" className="text-sm text-overdue">{errorMessage(update.error)}</span>}
@@ -207,10 +207,10 @@ function CardRow({ card, deckId, index = 0 }) {
     <li className="fun-card index-card card-tape sticker-sm flex flex-col"
       style={{ "--tilt": TILTS[index % TILTS.length], "--d": `${Math.min(index, 12) * 45}ms` }}>
       <div className="flex h-14 items-center justify-between px-4 pt-2">
-        <span className={`fun-badge ${BADGE_COLORS[index % BADGE_COLORS.length]} rounded-full border-2 border-[#1f1747] px-3 py-0.5 font-display text-sm font-bold`}>
+        <span className={`fun-badge ${BADGE_COLORS[index % BADGE_COLORS.length]} rounded-full border-2 border-edge px-3 py-0.5 font-display text-sm font-bold`}>
           {"\uD83C\uDCCF"} Card {index + 1}
         </span>
-        <span className="flex items-center gap-2 text-xs font-bold text-[#1f1747]/70">
+        <span className="flex items-center gap-2 text-xs font-bold text-on-sun/70">
           Level {card.box}/5 <BoxDots box={card.box} />
         </span>
       </div>
@@ -218,7 +218,7 @@ function CardRow({ card, deckId, index = 0 }) {
         <p className="whitespace-pre-wrap break-words font-display text-lg font-bold leading-snug">
           <span aria-hidden="true">{"\u2753"} </span>{card.front}
         </p>
-        <div className={`fun-note ${NOTE_COLORS[index % NOTE_COLORS.length]} rounded-xl border-2 border-[#1f1747] p-3 shadow-[2px_2px_0_#1f1747]`}>
+        <div className={`fun-note ${NOTE_COLORS[index % NOTE_COLORS.length]} rounded-xl border-2 border-edge p-3 shadow-[2px_2px_0_var(--color-edge)]`}>
           <p className="whitespace-pre-wrap break-words text-sm font-semibold leading-relaxed">
             <span aria-hidden="true">{"\uD83D\uDCA1"} </span>{card.back}
           </p>
@@ -226,12 +226,12 @@ function CardRow({ card, deckId, index = 0 }) {
       </div>
       <div className="flex justify-end gap-2 px-4 pb-3">
         <button onClick={() => setEditing(true)}
-          className="rounded-full border-2 border-[#1f1747] bg-white px-3 py-0.5 text-sm font-bold text-[#1f1747] transition-transform hover:-translate-y-0.5 hover:bg-[#ffd43b]">
+          className="rounded-full border-2 border-edge bg-white/70 px-3 py-0.5 text-sm font-bold text-on-sun transition-transform hover:-translate-y-0.5 hover:bg-sun">
           {"\u270F\uFE0F"} Edit
         </button>
         <button onClick={() => remove.mutate(card.id)} disabled={remove.isPending}
           aria-label={`Delete card: ${card.front}`}
-          className="rounded-full border-2 border-[#1f1747] bg-white px-3 py-0.5 text-sm font-bold text-[#1f1747] transition-transform hover:-translate-y-0.5 hover:bg-[#ff8fb8] disabled:opacity-50">
+          className="rounded-full border-2 border-edge bg-white/70 px-3 py-0.5 text-sm font-bold text-on-sun transition-transform hover:-translate-y-0.5 hover:bg-pink disabled:opacity-50">
           {"\uD83D\uDDD1\uFE0F"} Delete
         </button>
       </div>
@@ -295,7 +295,7 @@ function NotesPanel({ bulk, onDone }) {
         </label>
         <button type="button" disabled={notes.trim().length < 20 || gen.isPending || setsLeft === 0}
           onClick={() => gen.mutate({ text: notes, count }, { onSuccess: (cards) => { setDraft(cards); billing.refetch(); } })}
-          className="btn rounded-xl bg-brand px-5 py-2 font-display font-semibold text-white disabled:opacity-50">
+          className="btn rounded-xl bg-brand px-5 py-2 font-display font-semibold text-on-sun disabled:opacity-50">
           {gen.isPending ? "Making cards..." : "\u2728 Make flashcards"}
         </button>
         {setsLeft !== null && (
@@ -391,7 +391,7 @@ function DeckEditor({ deckId, onBack, onStudy }) {
           </p>
         </div>
         <button onClick={() => onStudy(deckId, mode)} disabled={deck.card_count === 0}
-          className="btn rounded-xl bg-brand px-5 py-2.5 font-display text-lg font-semibold text-white disabled:opacity-50">
+          className="btn rounded-xl bg-brand px-5 py-2.5 font-display text-lg font-semibold text-on-sun disabled:opacity-50">
           {deck.due_count > 0 ? `Study ${deck.due_count} due` : "Practice all"}
         </button>
       </div>
@@ -400,7 +400,7 @@ function DeckEditor({ deckId, onBack, onStudy }) {
         <div className="mb-4 flex gap-2" role="tablist">
           {[["notes", "\u2728 From notes"], ["one", "One at a time"], ["bulk", "Paste many"]].map(([id, label]) => (
             <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
-              className={`rounded-full px-4 py-1.5 text-sm font-bold ${tab === id ? "bg-brand text-white" : "text-muted hover:bg-line/60"}`}>
+              className={`rounded-full px-4 py-1.5 text-sm font-bold ${tab === id ? "bg-brand text-on-sun" : "text-muted hover:bg-line/60"}`}>
               {label}
             </button>
           ))}
@@ -426,7 +426,7 @@ function DeckEditor({ deckId, onBack, onStudy }) {
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <button type="submit" disabled={!front.trim() || !back.trim() || addCard.isPending}
-                className="btn rounded-xl bg-brand px-5 py-2 font-display font-semibold text-white disabled:opacity-50">Add card</button>
+                className="btn rounded-xl bg-brand px-5 py-2 font-display font-semibold text-on-sun disabled:opacity-50">Add card</button>
               {added > 0 && <span role="status" className="text-sm font-bold text-done">{added} added this visit</span>}
               {addCard.isError && <span role="alert" className="text-sm text-overdue">{errorMessage(addCard.error)}</span>}
             </div>
@@ -441,7 +441,7 @@ function DeckEditor({ deckId, onBack, onStudy }) {
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <button type="submit" disabled={!parsed.length || bulk.isPending}
-                className="btn rounded-xl bg-brand px-5 py-2 font-display font-semibold text-white disabled:opacity-50">
+                className="btn rounded-xl bg-brand px-5 py-2 font-display font-semibold text-on-sun disabled:opacity-50">
                 {parsed.length ? `Add ${parsed.length} card${parsed.length === 1 ? "" : "s"}` : "Add cards"}
               </button>
               {text.trim() && !parsed.length && <span className="text-sm text-muted">Put :: between the front and the back of each line.</span>}
@@ -610,7 +610,7 @@ function StudySession({ deck, initialCards, onExit }) {
               Retry {missed.length} missed
             </button>
           )}
-          <button onClick={() => restart(initialCards)} className="btn rounded-xl bg-brand px-5 py-2.5 font-display font-semibold text-white">
+          <button onClick={() => restart(initialCards)} className="btn rounded-xl bg-brand px-5 py-2.5 font-display font-semibold text-on-sun">
             Go again
           </button>
           <button onClick={onExit} className="btn rounded-xl bg-surface px-5 py-2.5 font-display font-semibold">Back to lectures</button>
@@ -673,7 +673,7 @@ function StudySession({ deck, initialCards, onExit }) {
           </div>
         ) : (
           <button onClick={() => setFlipped(true)}
-            className="btn w-full rounded-2xl bg-brand px-4 py-3 font-display text-lg font-semibold text-white">
+            className="btn w-full rounded-2xl bg-brand px-4 py-3 font-display text-lg font-semibold text-on-sun">
             Show answer <kbd className="ml-1 hidden text-xs opacity-60 sm:inline">space</kbd>
           </button>
         )}
@@ -707,7 +707,7 @@ function StudyLoader({ deckId, mode, onExit }) {
         </div>
         <div className="flex justify-center gap-3">
           <button onClick={() => { setPracticeAll(true); setInitial(cards.data); }}
-            className="btn rounded-xl bg-brand px-5 py-2.5 font-bold text-white">Practice all anyway</button>
+            className="btn rounded-xl bg-brand px-5 py-2.5 font-bold text-on-sun">Practice all anyway</button>
           <button onClick={onExit} className="btn rounded-xl bg-surface px-5 py-2.5 font-bold">Back</button>
         </div>
       </div>
@@ -728,14 +728,16 @@ export default function FlashcardsPage() {
     setView({ type: "decks" });
   };
 
+  let page;
   if (view.type === "study") {
-    return <StudyLoader key={`${view.id}-${view.mode}`} deckId={view.id} mode={view.mode}
+    page = <StudyLoader key={`${view.id}-${view.mode}`} deckId={view.id} mode={view.mode}
       onExit={() => (view.from === "deck" ? (qc.invalidateQueries({ queryKey: ["decks"] }), setView({ type: "deck", id: view.id })) : goDecks())} />;
-  }
-  if (view.type === "deck") {
-    return <DeckEditor deckId={view.id} onBack={goDecks}
+  } else if (view.type === "deck") {
+    page = <DeckEditor deckId={view.id} onBack={goDecks}
       onStudy={(id, mode) => setView({ type: "study", id, mode, from: "deck" })} />;
+  } else {
+    page = <DeckList onOpen={(id) => setView({ type: "deck", id })}
+      onStudy={(id, mode) => setView({ type: "study", id, mode, from: "decks" })} />;
   }
-  return <DeckList onOpen={(id) => setView({ type: "deck", id })}
-    onStudy={(id, mode) => setView({ type: "study", id, mode, from: "decks" })} />;
+  return <div className="pastel">{page}</div>;
 }

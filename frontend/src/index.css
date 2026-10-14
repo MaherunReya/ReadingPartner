@@ -211,3 +211,38 @@ textarea:focus {
   background-size: 22px 22px; animation: stripes 1.2s linear infinite;
 }
 @keyframes stripes { to { background-position: 22px 0; } }
+
+/* Pastel theme, scoped to the flashcards page (wrapper class "pastel").
+   Overrides the colour tokens locally, so the rest of the app keeps its look. */
+.pastel {
+  --color-edge: #a79fd0;
+  --color-on-sun: #3a3263;
+  --color-sun: #fbeab0;
+  --color-pink: #f8cfdc;
+  --color-sky: #c6e8f5;
+  --color-mint: #c4efe0;
+  --color-brand: #b9aef5;
+  --color-brand-dark: #a396ef;
+}
+.dark .pastel {
+  --color-edge: #6d63a8;
+  --color-sun: #eadba3;
+  --color-pink: #e6bfcf;
+  --color-sky: #aed6e6;
+  --color-mint: #aedfcc;
+  --color-brand: #a99df0;
+}
+.pastel .sticker { box-shadow: 3px 3px 0 var(--color-edge); }
+.pastel .sticker-sm { box-shadow: 2px 2px 0 var(--color-edge); }
+.pastel .btn { box-shadow: 2px 2px 0 var(--color-edge); }
+.pastel .btn:hover:not(:disabled) { box-shadow: 3px 3px 0 var(--color-edge); }
+.pastel .btn:active:not(:disabled) { box-shadow: 1px 1px 0 var(--color-edge); }
+.pastel .fun-card:hover { box-shadow: 4px 6px 0 var(--color-edge); }
+.pastel .index-card {
+  color: #3a3263; background-color: #fffcf4;
+  background-image:
+    linear-gradient(transparent 56px, var(--color-pink) 56px, var(--color-pink) 58px, transparent 58px),
+    repeating-linear-gradient(to bottom, transparent 0, transparent 31px, #e6eefa 31px, #e6eefa 32px);
+}
+.pastel .card-tape::before { background: rgba(251, 234, 176, 0.85); border-color: var(--color-edge); }
+.pastel .answer-card { background-image: radial-gradient(rgba(58, 50, 99, 0.07) 2px, transparent 2px); }

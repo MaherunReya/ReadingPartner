@@ -41,7 +41,7 @@ function Shell() {
       <header className="border-b-2 border-edge bg-surface">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
           <LogoLink />
-          <nav className="flex gap-1" aria-label="Main">
+          <nav className="flex w-full gap-1 overflow-x-auto sm:w-auto" aria-label="Main">
             {LINKS.map((l) => (
               <NavLink key={l.to} to={l.to}
                 className={({ isActive }) =>

@@ -46,13 +46,13 @@ def send_email(to: str, subject: str, text: str, html: str) -> None:
 def send_verification_email(to: str, code: str) -> None:
     minutes = os.getenv("OTP_EXPIRE_MINUTES", "10")
     text = (
-        "Welcome to Study Guide.\n\n"
+        "Welcome to Reading Partner.\n\n"
         f"Your verification code is: {code}\n\n"
         f"It expires in {minutes} minutes. If you didn't create an account, ignore this email."
     )
     html = (
-        "<p>Welcome to Study Guide.</p>"
+        "<p>Welcome to Reading Partner.</p>"
         f'<p>Your verification code is:</p><p style="font-size:28px;font-weight:700;letter-spacing:6px">{code}</p>'
         f"<p>It expires in {minutes} minutes. If you didn't create an account, ignore this email.</p>"
     )
-    send_email(to, f"{code} is your Study Guide verification code", text, html)
+    send_email(to, f"{code} is your Reading Partner verification code", text, html)

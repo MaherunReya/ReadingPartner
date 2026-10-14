@@ -14,7 +14,7 @@ export default function Logo({ className = "" }) {
   return (
     <span className={`inline-flex items-center gap-2 whitespace-nowrap font-display text-lg font-bold ${className}`}>
       <LogoMark />
-      Study Guide
+      Reading Partner
     </span>
   );
 }

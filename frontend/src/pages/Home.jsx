@@ -271,7 +271,7 @@ export default function Home() {
           <div>
             <h2 className="text-4xl font-bold">Go on, tick something off.</h2>
             <p className="mt-4 max-w-md text-lg text-muted">
-              This is the feeling Study Guide is built around. Finish a task, watch the ring fill, and see how good a clean list feels.
+              This is the feeling Reading Partner is built around. Finish a task, watch the ring fill, and see how good a clean list feels.
             </p>
             {!token && (
               <Link to="/signup" className={`${cta} mt-8`}>Make my own list</Link>
@@ -317,7 +317,7 @@ export default function Home() {
           <a href="#faq" className="hover:text-ink">FAQ</a>
           <Link to="/login" className="hover:text-ink">Log in</Link>
         </nav>
-        <p>&copy; {new Date().getFullYear()} Study Guide. Made for students.</p>
+        <p>&copy; {new Date().getFullYear()} Reading Partner. Made for students.</p>
       </footer>
     </div>
   );

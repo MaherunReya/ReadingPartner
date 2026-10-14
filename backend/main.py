@@ -35,4 +35,4 @@ app.include_router(ai.router)
 
 @app.get("/")
 def root():
-    return {"message": "Study Guide backend is running"}
+    return {"message": "Reading Partner backend is running"}

@@ -180,7 +180,7 @@ export default function AuthPage({ mode }) {
         ) : (
           <form onSubmit={handleSubmit} className="w-full max-w-sm">
             <h2 className="text-2xl font-bold">
-              {isLogin ? "Log in to Study Guide" : "Create your account"}
+              {isLogin ? "Log in to Reading partner" : "Create your account"}
             </h2>
 
             {!isLogin && (

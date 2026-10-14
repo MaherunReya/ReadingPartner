@@ -24,9 +24,9 @@ export default function App() {
       <Route path="/signup" element={<GuestRoute><AuthPage key="signup" mode="signup" /></GuestRoute>} />
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/flashcards" element={<FlashcardsPage />} />
         <Route path="/focus" element={<FocusPage />} />
         <Route path="/prayers" element={<Prayers />} />
-        <Route path="/flashcards" element={<FlashcardsPage />} />
         <Route path="/billing" element={<BillingPage />} />
         <Route path="/mood" element={<MoodPage />} />
       </Route>

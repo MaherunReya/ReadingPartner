@@ -11,3 +11,4 @@ google-genai
 stripe>=8
 pypdf
 python-pptx
+psycopg[binary]

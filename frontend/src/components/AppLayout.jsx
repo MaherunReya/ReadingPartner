@@ -11,7 +11,7 @@ const LINKS = [
   { to: "/focus", label: "Focus" },
   { to: "/prayers", label: "Prayers" },
   { to: "/flashcards", label: "Flashcards" },
-  { to: "/chat", label: "Study buddy" },
+  { to: "/billing", label: "Billing" },
 ];
 
 function TimerChip() {

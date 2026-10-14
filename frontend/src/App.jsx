@@ -8,7 +8,8 @@ import FocusPage from "./pages/FocusPage";
 import Home from "./pages/Home";
 import Prayers from "./pages/Prayers";
 import FlashcardsPage from "./pages/FlashcardsPage";
-import ChatPage from "./pages/ChatPage";
+import BillingPage from "./pages/BillingPage";
+import MoodPage from "./pages/MoodPage";
 
 function GuestRoute({ children }) {
   const { token } = useAuth();
@@ -26,7 +27,8 @@ export default function App() {
         <Route path="/focus" element={<FocusPage />} />
         <Route path="/prayers" element={<Prayers />} />
         <Route path="/flashcards" element={<FlashcardsPage />} />
-        <Route path="/chat" element={<ChatPage />} />
+        <Route path="/billing" element={<BillingPage />} />
+        <Route path="/mood" element={<MoodPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Date, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Column, Date, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import expression, func
 
@@ -123,3 +123,31 @@ class Card(Base):
     due_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     reviews = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class Subscription(Base):
+    """One row per user. Pro is active while status is 'active' and current_period_end is in the future."""
+
+    __tablename__ = "subscriptions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    plan = Column(String(20), nullable=False, default="free")
+    status = Column(String(20), nullable=False, default="active")
+    current_period_end = Column(DateTime(timezone=True), nullable=True)
+    provider = Column(String(30), nullable=True)  # "stripe"
+    provider_ref = Column(String(120), nullable=True, index=True)  # Stripe customer id (cus_...)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class AiUsage(Base):
+    """One row per AI request that counted against the user's limits."""
+
+    __tablename__ = "ai_usage"
+    __table_args__ = (Index("ix_ai_usage_user_kind_time", "user_id", "kind", "created_at"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    kind = Column(String(20), nullable=False)  # currently just "flashcards"
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

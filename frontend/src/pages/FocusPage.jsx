@@ -9,6 +9,59 @@ import WeekChart from "../components/WeekChart";
 import { lastNDays, toISODate } from "../dates";
 import { MODES, formatClock, useFocus, useFocusSessions } from "../focusTimer";
 
+const MODE_EMOJI = { focus: "\uD83C\uDF45", short: "\u2615", long: "\uD83C\uDF34" };
+
+// Each mode gets its own colours so switching feels like changing scenery.
+const MODE_THEME = {
+  focus: { tab: "bg-[#ff5a4f] text-white", ring: ["#ff5a4f", "#ff9f43", "#ffd43b"] },
+  short: { tab: "bg-mint text-on-sun", ring: ["#7ee8c7", "#6fd3f5"] },
+  long: { tab: "bg-sky text-on-sun", ring: ["#6fd3f5", "#6d4aff"] },
+};
+
+function MiniTomato({ filled }) {
+  return (
+    <svg viewBox="0 0 40 40" width="30" height="30" aria-hidden="true" className={filled ? "mini-tomato-pop" : ""}>
+      {filled ? (
+        <>
+          <ellipse cx="20" cy="23" rx="15" ry="13" fill="#ee3b32" stroke="var(--color-edge)" strokeWidth="2.5" />
+          <ellipse cx="14" cy="18" rx="4" ry="2.2" fill="#fff" opacity="0.45" transform="rotate(-30 14 18)" />
+          <path d="M20 11 C16 5 11 6 9 9 C13 9 16 11 18 13 Z M20 11 C24 5 29 6 31 9 C27 9 24 11 22 13 Z" fill="#4caf50" stroke="var(--color-edge)" strokeWidth="2" strokeLinejoin="round" />
+        </>
+      ) : (
+        <>
+          <ellipse cx="20" cy="23" rx="15" ry="13" fill="var(--color-line)" stroke="var(--color-edge)" strokeWidth="2.5" opacity="0.7" />
+          <path d="M20 11 C16 5 11 6 9 9 C13 9 16 11 18 13 Z M20 11 C24 5 29 6 31 9 C27 9 24 11 22 13 Z" fill="var(--color-line)" stroke="var(--color-edge)" strokeWidth="2" strokeLinejoin="round" opacity="0.7" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+function FloatBits() {
+  const bits = [
+    { e: "\uD83D\uDCDA", cls: "-left-3 top-6", d: "0s" },
+    { e: "\u270F\uFE0F", cls: "-right-3 top-10", d: "0.8s" },
+    { e: "\uD83E\uDDE0", cls: "-left-1 bottom-10", d: "1.6s" },
+    { e: "\u2B50", cls: "-right-1 bottom-6", d: "2.2s" },
+  ];
+  return bits.map((b) => (
+    <span key={b.e} aria-hidden="true" className={`float-bit hidden sm:block ${b.cls}`} style={{ animationDelay: b.d }}>{b.e}</span>
+  ));
+}
+
+function TaskChip({ selected, onClick, children, title }) {
+  return (
+    <button type="button" role="radio" aria-checked={selected} onClick={onClick} title={title}
+      className={`max-w-[16rem] truncate rounded-full border-2 px-3.5 py-1.5 text-sm font-bold transition-all duration-150 ${
+        selected
+          ? "-translate-y-0.5 border-edge bg-sun text-on-sun shadow-[2px_2px_0_var(--color-edge)]"
+          : "border-line bg-surface text-ink hover:-translate-y-0.5 hover:border-brand"
+      }`}>
+      {children}
+    </button>
+  );
+}
+
 function SettingsForm() {
   const { settings, updateSettings } = useFocus();
   const [draft, setDraft] = useState({ focus: settings.focus, short: settings.short, long: settings.long });
@@ -92,16 +145,24 @@ export default function FocusPage() {
   }, [sessionsQuery.data]);
 
   const taskTitle = (id) => (tasksQuery.data ?? []).find((t) => t.id === id)?.title;
+  const chipTasks = timer.taskId && !openTasks.some((t) => t.id === timer.taskId)
+    ? [...openTasks, { id: timer.taskId, title: taskTitle(timer.taskId) ?? "Selected task" }]
+    : openTasks;
   const filled = timer.mode === "long" ? 4 : timer.cycle % 4;
   const progress = f.totalMs ? 1 - f.remainingMs / f.totalMs : 0;
-  const ringColor = timer.mode === "focus" ? "var(--color-brand)" : "var(--color-done)";
+  const running_ = timer.status === "running";
+  const statusLabel = timer.status === "paused"
+    ? "Napping... tap Resume"
+    : timer.mode === "focus"
+      ? (running_ ? "Locked in! \uD83D\uDD25" : "Ready to focus?")
+      : (running_ ? "Break time, relax \u2728" : "Take a break?");
   const hours = Math.floor(stats.todayMinutes / 60);
   const mins = stats.todayMinutes % 60;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Focus timer</h1>
+        <h1 className="text-3xl font-bold">Focus timer {"\uD83C\uDF45"}</h1>
         <p className="mt-1 text-muted">Work in short, focused rounds with breaks in between. Four rounds earns a long break.</p>
       </div>
 
@@ -119,71 +180,79 @@ export default function FocusPage() {
               <button key={id} role="tab" aria-selected={timer.mode === id} disabled={running}
                 onClick={() => f.setMode(id)}
                 className={`rounded-lg px-4 py-1.5 text-sm font-bold transition-colors disabled:cursor-not-allowed ${
-                  timer.mode === id ? "bg-brand text-white" : "text-muted hover:text-ink disabled:opacity-50"
+                  timer.mode === id ? MODE_THEME[id].tab : "text-muted hover:text-ink disabled:opacity-50"
                 }`}>
-                {m.label}
+                {MODE_EMOJI[id]} {m.label}
               </button>
             ))}
           </div>
 
-          <div className="mt-8">
-            <TimerRing progress={progress} color={ringColor}>
-            <TimerTomato progress={progress} status={timer.status} mode={timer.mode} />
-              <span className="font-display text-5xl font-bold tabular-nums" role="timer" aria-live="off">
+          <div className="relative mx-auto mt-6 w-fit max-w-full">
+            <div className="timer-glow" data-mode={timer.mode} aria-hidden="true" />
+            <FloatBits />
+            <TimerRing progress={progress} color={MODE_THEME[timer.mode].ring[0]} gradient={MODE_THEME[timer.mode].ring} fill="var(--color-surface)" size={260} stroke={14}>
+              <TimerTomato progress={progress} status={timer.status} mode={timer.mode} size={116} />
+              <span className="font-display text-4xl font-bold tabular-nums" role="timer" aria-live="off">
                 {formatClock(f.remainingMs)}
               </span>
               <span className="mt-1 text-sm font-bold text-muted">
-                {timer.status === "paused" ? "Paused" : MODES[timer.mode].label}
+                {statusLabel}
               </span>
             </TimerRing>
           </div>
 
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             {running ? (
               <button onClick={f.pause} className="btn rounded-xl bg-sun px-8 py-3 font-display text-lg font-semibold text-on-sun">
-                Pause
+                {"\u23F8\uFE0F"} Pause
               </button>
             ) : (
-              <button onClick={f.start} className="btn rounded-xl bg-brand px-8 py-3 font-display text-lg font-semibold text-white">
-                {timer.status === "paused" ? "Resume" : "Start"}
+              <button onClick={f.start} className={`btn rounded-2xl bg-brand px-8 py-3 font-display text-lg font-semibold text-white ${idle ? "pulse-glow" : ""}`}>
+                {timer.status === "paused" ? "\u25B6\uFE0F Resume" : "\u25B6\uFE0F Start"}
               </button>
             )}
             <button onClick={f.reset} disabled={idle}
-              className="btn rounded-xl bg-surface px-5 py-3 font-bold disabled:opacity-50">Reset</button>
+              className="btn rounded-xl bg-surface px-5 py-3 font-bold disabled:opacity-50">{"\uD83D\uDD04"} Reset</button>
             <button onClick={f.skip}
               className="rounded-xl px-4 py-3 font-bold text-muted hover:text-ink">
-              Skip {timer.mode === "focus" ? "to break" : "break"}
+              {"\u23ED\uFE0F"} Skip {timer.mode === "focus" ? "to break" : "break"}
             </button>
           </div>
 
-          <div className="mt-6 flex items-center justify-center gap-2" role="img" aria-label={`${filled} of 4 rounds before a long break`}>
+          <div className="mt-4 flex items-center justify-center gap-1.5" role="img" aria-label={`${filled} of 4 rounds before a long break`}>
             {[0, 1, 2, 3].map((i) => (
-              <span key={i} className={`size-3.5 rounded-full border-2 border-edge ${i < filled ? "bg-brand" : "bg-surface"}`} />
+              <MiniTomato key={`${i}-${i < filled}`} filled={i < filled} />
             ))}
           </div>
 
-          <div className="mx-auto mt-8 max-w-sm">
-            <label htmlFor="focus-task" className="text-sm font-bold text-muted">What are you working on?</label>
-            <select id="focus-task" value={timer.taskId ?? ""}
-              onChange={(e) => f.setTask(e.target.value ? Number(e.target.value) : null)}
-              className="mt-1 w-full border border-line bg-surface px-3 py-2">
-              <option value="">Just focusing</option>
-              {openTasks.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
-              {timer.taskId && !openTasks.some((t) => t.id === timer.taskId) && (
-                <option value={timer.taskId}>{taskTitle(timer.taskId) ?? "Selected task"}</option>
-              )}
-            </select>
+          <div className="mx-auto mt-6 max-w-md">
+            <div className="card-tape sticker-sm -rotate-1 bg-[#fff6c9] px-4 pb-3 pt-4 text-[#1f1747]">
+              <p className="text-xs font-bold uppercase tracking-wider opacity-70">{"\uD83D\uDCCC"} Now working on</p>
+              <p className="mt-0.5 break-words font-display text-lg font-bold leading-snug">
+                {timer.taskId ? (taskTitle(timer.taskId) ?? "Selected task") : "Just focusing \uD83C\uDFA7"}
+              </p>
+            </div>
+            <p id="focus-task-label" className="mt-4 text-sm font-bold text-muted">Pick something to focus on</p>
+            <div role="radiogroup" aria-labelledby="focus-task-label" className="mt-2 flex max-h-32 flex-wrap gap-2 overflow-y-auto p-1">
+              <TaskChip selected={!timer.taskId} onClick={() => f.setTask(null)}>{"\uD83C\uDFA7"} Just focusing</TaskChip>
+              {chipTasks.map((t) => (
+                <TaskChip key={t.id} selected={timer.taskId === t.id} onClick={() => f.setTask(t.id)} title={t.title}>{t.title}</TaskChip>
+              ))}
+            </div>
+            {openTasks.length === 0 && (
+              <p className="mt-2 text-xs text-muted">No open tasks yet. Add some on the dashboard and they'll show up here.</p>
+            )}
           </div>
         </Card>
 
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-3">
-            <div className="sticker-sm bg-surface px-4 py-3">
-              <p className="text-sm text-muted">Focused today</p>
+            <div className="sticker-sm -rotate-1 bg-surface px-4 py-3 transition-transform hover:rotate-0 hover:-translate-y-1">
+              <p className="text-sm text-muted">{"\u23F1\uFE0F"} Focused today</p>
               <p className="font-display text-2xl font-bold">{hours ? `${hours}h ${mins}m` : `${mins}m`}</p>
             </div>
-            <div className="sticker-sm bg-surface px-4 py-3">
-              <p className="text-sm text-muted">Rounds today</p>
+            <div className="sticker-sm rotate-1 bg-surface px-4 py-3 transition-transform hover:rotate-0 hover:-translate-y-1">
+              <p className="text-sm text-muted">{"\uD83C\uDF45"} Rounds today</p>
               <p className="font-display text-2xl font-bold">{stats.today.length}</p>
             </div>
           </div>

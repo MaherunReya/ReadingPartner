@@ -3,14 +3,16 @@ import json
 import os
 import re
 import time
-from typing import Literal
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from google import genai
 from google.genai import errors, types
 from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
 
 import models
+import usage
+from database import get_db
 from dependencies import get_current_user
 
 router = APIRouter(prefix="/ai", tags=["ai"])
@@ -18,12 +20,6 @@ router = APIRouter(prefix="/ai", tags=["ai"])
 # Tried in order. Optionally add a second model name from AI Studio's model list as a fallback.
 MODELS = ["gemini-3.8-flash"]
 _client = None
-
-CHAT_SYSTEM = (
-    "You are a friendly study buddy inside a student's study app. The student is a university "
-    "Computer Science and Engineering undergraduate. Explain clearly with small examples, keep "
-    "answers short unless asked for more, and ask a quick question back when it helps them learn."
-)
 
 CARDS_SYSTEM = (
     "You turn lecture notes into flashcards. Reply with ONLY a JSON array, no other text. "
@@ -65,26 +61,9 @@ def _ask(system: str, messages: list[dict], max_tokens: int) -> str:
     raise HTTPException(502, "The AI is busy right now. Try again in a minute.") from last
 
 
-class ChatMessage(BaseModel):
-    role: Literal["user", "assistant"]
-    content: str = Field(min_length=1, max_length=4000)
-
-
-class ChatIn(BaseModel):
-    messages: list[ChatMessage] = Field(min_length=1, max_length=30)
-
-
 class CardsIn(BaseModel):
     text: str = Field(min_length=20, max_length=20000)
     count: int = Field(default=10, ge=3, le=30)
-
-
-@router.post("/chat")
-def chat(data: ChatIn, user: models.User = Depends(get_current_user)):
-    if data.messages[-1].role != "user":
-        raise HTTPException(422, "The last message must be yours")
-    reply = _ask(CHAT_SYSTEM, [m.model_dump() for m in data.messages], 1000)
-    return {"reply": reply}
 
 
 def _parse_cards(raw: str, limit: int) -> list[dict]:
@@ -111,10 +90,23 @@ def _parse_cards(raw: str, limit: int) -> list[dict]:
 
 
 @router.post("/flashcards")
-def make_flashcards(data: CardsIn, user: models.User = Depends(get_current_user)):
-    prompt = f"Make {data.count} flashcards from these lecture notes:\n\n{data.text}"
-    raw = _ask(CARDS_SYSTEM, [{"role": "user", "content": prompt}], 8000)
-    return {"cards": _parse_cards(raw, data.count)}
+def make_flashcards(data: CardsIn, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    plan = usage.plan_for(db, user)
+    if len(data.text) > plan["max_notes_chars"]:
+        extra = " Upgrade to Pro for longer notes." if plan["id"] == "free" else ""
+        raise HTTPException(422, f"Your plan takes notes up to {plan['max_notes_chars']:,} characters. Split the lecture into parts.{extra}")
+    usage.check(db, user, plan, "flashcards")
+
+    count = min(data.count, plan["max_cards"])
+    prompt = f"Make {count} flashcards from these lecture notes:\n\n{data.text}"
+    row = usage.record(db, user, "flashcards")
+    try:
+        raw = _ask(CARDS_SYSTEM, [{"role": "user", "content": prompt}], 8000)
+        cards = _parse_cards(raw, count)
+    except Exception:
+        usage.refund(db, row)
+        raise
+    return {"cards": cards}
 
 
 MAX_UPLOAD = 15 * 1024 * 1024  # 15 MB

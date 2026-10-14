@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import api, { errorMessage } from "../api";
+import { useBilling } from "../billing";
 import Card from "../components/Card";
 import {
   DECK_COLORS, EMOJI, isDue, parseBulk, shuffle,
@@ -160,13 +161,17 @@ function BoxDots({ box }) {
   return (
     <span className="inline-flex items-center gap-0.5" title={`Box ${box} of 5`} aria-label={`Box ${box} of 5`}>
       {[1, 2, 3, 4, 5].map((n) => (
-        <span key={n} className={`size-1.5 rounded-full ${n <= box ? "bg-brand" : "bg-line"}`} />
+        <span key={n} className={`size-1.5 rounded-full ${n <= box ? "bg-brand" : "bg-[#1f1747]/20"}`} />
       ))}
     </span>
   );
 }
 
-function CardRow({ card, deckId }) {
+const TILTS = ["-1.4deg", "1deg", "-0.7deg", "1.5deg", "-1deg", "0.6deg"];
+const NOTE_COLORS = ["bg-mint", "bg-sun", "bg-sky", "bg-pink"];
+const BADGE_COLORS = ["bg-pink", "bg-sky", "bg-sun", "bg-mint"];
+
+function CardRow({ card, deckId, index = 0 }) {
   const update = useUpdateCard(deckId);
   const remove = useDeleteCard(deckId);
   const [editing, setEditing] = useState(false);
@@ -181,7 +186,7 @@ function CardRow({ card, deckId }) {
 
   if (editing) {
     return (
-      <li className="py-3">
+      <li className="sticker-sm col-span-full bg-surface p-4">
         <form onSubmit={save} className="space-y-2">
           <textarea aria-label="Front" rows={2} maxLength={2000} value={front} onChange={(e) => setFront(e.target.value)}
             className="w-full resize-y border border-line bg-surface px-3 py-2" />
@@ -199,19 +204,36 @@ function CardRow({ card, deckId }) {
   }
 
   return (
-    <li className="flex items-start gap-3 py-3">
-      <div className="grid min-w-0 flex-1 gap-1 sm:grid-cols-2 sm:gap-4">
-        <p className="whitespace-pre-wrap break-words font-bold">{card.front}</p>
-        <p className="whitespace-pre-wrap break-words text-muted">{card.back}</p>
+    <li className="fun-card index-card card-tape sticker-sm flex flex-col"
+      style={{ "--tilt": TILTS[index % TILTS.length], "--d": `${Math.min(index, 12) * 45}ms` }}>
+      <div className="flex h-14 items-center justify-between px-4 pt-2">
+        <span className={`fun-badge ${BADGE_COLORS[index % BADGE_COLORS.length]} rounded-full border-2 border-[#1f1747] px-3 py-0.5 font-display text-sm font-bold`}>
+          {"\uD83C\uDCCF"} Card {index + 1}
+        </span>
+        <span className="flex items-center gap-2 text-xs font-bold text-[#1f1747]/70">
+          Level {card.box}/5 <BoxDots box={card.box} />
+        </span>
       </div>
-      <div className="flex shrink-0 flex-col items-end gap-1.5 text-sm">
-        <BoxDots box={card.box} />
-        <div className="flex gap-1">
-          <button onClick={() => setEditing(true)} className="rounded px-2 py-0.5 text-muted hover:bg-line/60 hover:text-ink">Edit</button>
-          <button onClick={() => remove.mutate(card.id)} disabled={remove.isPending}
-            aria-label={`Delete card: ${card.front}`}
-            className="rounded px-2 py-0.5 text-muted hover:bg-overdue/10 hover:text-overdue">Delete</button>
+      <div className="flex-1 space-y-3 px-4 pb-3 pt-3">
+        <p className="whitespace-pre-wrap break-words font-display text-lg font-bold leading-snug">
+          <span aria-hidden="true">{"\u2753"} </span>{card.front}
+        </p>
+        <div className={`fun-note ${NOTE_COLORS[index % NOTE_COLORS.length]} rounded-xl border-2 border-[#1f1747] p-3 shadow-[2px_2px_0_#1f1747]`}>
+          <p className="whitespace-pre-wrap break-words text-sm font-semibold leading-relaxed">
+            <span aria-hidden="true">{"\uD83D\uDCA1"} </span>{card.back}
+          </p>
         </div>
+      </div>
+      <div className="flex justify-end gap-2 px-4 pb-3">
+        <button onClick={() => setEditing(true)}
+          className="rounded-full border-2 border-[#1f1747] bg-white px-3 py-0.5 text-sm font-bold text-[#1f1747] transition-transform hover:-translate-y-0.5 hover:bg-[#ffd43b]">
+          {"\u270F\uFE0F"} Edit
+        </button>
+        <button onClick={() => remove.mutate(card.id)} disabled={remove.isPending}
+          aria-label={`Delete card: ${card.front}`}
+          className="rounded-full border-2 border-[#1f1747] bg-white px-3 py-0.5 text-sm font-bold text-[#1f1747] transition-transform hover:-translate-y-0.5 hover:bg-[#ff8fb8] disabled:opacity-50">
+          {"\uD83D\uDDD1\uFE0F"} Delete
+        </button>
       </div>
     </li>
   );
@@ -224,6 +246,11 @@ function NotesPanel({ bulk, onDone }) {
   const [draft, setDraft] = useState([]);
   const [reading, setReading] = useState(false);
   const [fileMsg, setFileMsg] = useState("");
+  const billing = useBilling();
+  const plan = billing.data?.plan;
+  const sets = billing.data?.usage.flashcards;
+  const setsLeft = sets ? Math.max(0, sets.limit - sets.used) : null;
+  const countOptions = [5, 10, 15, 20, 30].filter((n) => !plan || n <= plan.max_cards);
 
   async function onFile(e) {
     const file = e.target.files?.[0];
@@ -263,14 +290,19 @@ function NotesPanel({ bulk, onDone }) {
         <label className="flex items-center gap-2 text-sm font-bold text-muted">
           Cards
           <select value={count} onChange={(e) => setCount(Number(e.target.value))} className="border border-line bg-surface px-2 py-1">
-            {[5, 10, 15, 20, 30].map((n) => <option key={n} value={n}>{n}</option>)}
+            {countOptions.map((n) => <option key={n} value={n}>{n}</option>)}
           </select>
         </label>
-        <button type="button" disabled={notes.trim().length < 20 || gen.isPending}
-          onClick={() => gen.mutate({ text: notes, count }, { onSuccess: setDraft })}
+        <button type="button" disabled={notes.trim().length < 20 || gen.isPending || setsLeft === 0}
+          onClick={() => gen.mutate({ text: notes, count }, { onSuccess: (cards) => { setDraft(cards); billing.refetch(); } })}
           className="btn rounded-xl bg-brand px-5 py-2 font-display font-semibold text-white disabled:opacity-50">
           {gen.isPending ? "Making cards..." : "\u2728 Make flashcards"}
         </button>
+        {setsLeft !== null && (
+          <span className={`text-xs font-bold ${setsLeft === 0 ? "text-overdue" : "text-muted"}`}>
+            {"\u26A1"} {setsLeft} of {sets.limit} AI sets left this month
+          </span>
+        )}
         {gen.isError && <span role="alert" className="text-sm text-overdue">{errorMessage(gen.error)}</span>}
       </div>
 
@@ -423,8 +455,8 @@ function DeckEditor({ deckId, onBack, onStudy }) {
         {cards.isLoading ? (
           <div className="h-24 animate-pulse rounded-xl bg-line/60" />
         ) : cards.data?.length ? (
-          <ul className="divide-y divide-line">
-            {cards.data.map((card) => <CardRow key={`${card.id}-${card.front}-${card.back}`} card={card} deckId={deckId} />)}
+          <ul className="grid gap-x-6 gap-y-8 px-1 pt-4 sm:grid-cols-2">
+            {cards.data.map((card, i) => <CardRow key={`${card.id}-${card.front}-${card.back}`} card={card} deckId={deckId} index={i} />)}
           </ul>
         ) : (
           <p className="text-sm text-muted">Nothing here yet. Add your first card above.</p>
@@ -588,7 +620,6 @@ function StudySession({ deck, initialCards, onExit }) {
   }
 
   /* --- Studying --- */
-  const mascot = exit === "right" ? EMOJI.party : exit === "left" ? EMOJI.sweat : flipped ? EMOJI.eyes : EMOJI.think;
   const done = total - uniqueLeft;
 
   return (
@@ -602,32 +633,30 @@ function StudySession({ deck, initialCards, onExit }) {
         <span className="shrink-0 text-sm font-bold tabular-nums text-muted">{done} / {total}</span>
       </div>
 
-      <div className="flex h-10 items-center justify-between">
-        <span className="text-4xl" aria-hidden="true">{mascot}</span>
-        {combo >= 2 && (
+      {combo >= 2 && (
+        <div className="flex justify-end">
           <span key={combo} className="pop sticker-sm bg-sun px-3 py-1 text-sm font-bold text-on-sun">
-            {EMOJI.fire} {combo} in a row
+            {combo} in a row
           </span>
-        )}
-      </div>
+        </div>
+      )}
 
       <div key={`${current.id}-${turn}`}
-        className={`card-tape h-72 sm:h-80 ${exit === "right" ? "fly-right" : exit === "left" ? "fly-left" : "card-in"}`}>
-        <div className="flip-scene h-full cursor-pointer" onClick={() => !exit && setFlipped((f) => !f)}>
-          <div className={`flip-card ${flipped ? "is-flipped" : ""}`}>
-            <div className="flip-face sticker index-card flex flex-col items-center justify-center overflow-auto p-6 text-center"
-              aria-hidden={flipped}>
-              <span className="absolute left-4 top-3 text-xs font-bold uppercase tracking-widest text-on-sun/60">Question</span>
-              <p className="whitespace-pre-wrap break-words font-display text-2xl font-semibold leading-snug sm:text-3xl">{current.front}</p>
-              <span className="absolute bottom-3 text-xs font-bold text-on-sun/60">tap to flip</span>
-            </div>
-            <div className={`flip-face flip-back answer-card sticker ${c.bg} flex flex-col items-center justify-center overflow-auto p-6 text-center text-on-sun`}
-              aria-hidden={!flipped}>
-              <span className="absolute left-4 top-3 text-xs font-bold uppercase tracking-widest text-on-sun/70">Answer</span>
-              <p className="whitespace-pre-wrap break-words font-display text-2xl font-semibold leading-snug sm:text-3xl">{current.back}</p>
-            </div>
+        className={`space-y-5 ${exit === "right" ? "fly-right" : exit === "left" ? "fly-left" : "card-in"}`}>
+        <div className="card-tape">
+          <div className="sticker index-card relative flex min-h-48 cursor-pointer flex-col items-center justify-center p-6 pb-9 pt-10 text-center"
+            onClick={() => !exit && setFlipped((f) => !f)}>
+            <span className="absolute left-4 top-3 text-xs font-bold uppercase tracking-widest text-on-sun/60">Question</span>
+            <p className="whitespace-pre-wrap break-words font-display text-2xl font-semibold leading-snug sm:text-3xl">{current.front}</p>
+            {!flipped && <span className="absolute bottom-3 text-xs font-bold text-on-sun/60">tap to show answer</span>}
           </div>
         </div>
+        {flipped && (
+          <div className={`answer-card sticker ${c.bg} relative flex min-h-48 flex-col items-center justify-center p-6 pt-10 text-center text-on-sun`}>
+            <span className="absolute left-4 top-3 text-xs font-bold uppercase tracking-widest text-on-sun/70">Answer</span>
+            <p className="whitespace-pre-wrap break-words font-display text-2xl font-semibold leading-snug sm:text-3xl">{current.back}</p>
+          </div>
+        )}
       </div>
 
       <div className="min-h-[3.5rem]">
@@ -635,17 +664,17 @@ function StudySession({ deck, initialCards, onExit }) {
           <div className="grid grid-cols-2 gap-3">
             <button onClick={() => answer(false)} disabled={!!exit}
               className="btn rounded-2xl bg-pink px-4 py-3 font-display text-lg font-semibold text-on-sun">
-              {EMOJI.sweat} Again <kbd className="ml-1 hidden text-xs opacity-60 sm:inline">&larr;</kbd>
+              Again <kbd className="ml-1 hidden text-xs opacity-60 sm:inline">&larr;</kbd>
             </button>
             <button onClick={() => answer(true)} disabled={!!exit}
               className="btn rounded-2xl bg-mint px-4 py-3 font-display text-lg font-semibold text-on-sun">
-              {EMOJI.cool} Got it <kbd className="ml-1 hidden text-xs opacity-60 sm:inline">&rarr;</kbd>
+              Got it <kbd className="ml-1 hidden text-xs opacity-60 sm:inline">&rarr;</kbd>
             </button>
           </div>
         ) : (
           <button onClick={() => setFlipped(true)}
             className="btn w-full rounded-2xl bg-brand px-4 py-3 font-display text-lg font-semibold text-white">
-            Flip card <kbd className="ml-1 hidden text-xs opacity-60 sm:inline">space</kbd>
+            Show answer <kbd className="ml-1 hidden text-xs opacity-60 sm:inline">space</kbd>
           </button>
         )}
       </div>

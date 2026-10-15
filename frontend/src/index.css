@@ -4,38 +4,47 @@
   --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Fredoka", "Nunito", ui-rounded, system-ui, sans-serif;
 
-  --color-paper: #f8f3e9;
-  --color-surface: #fdfaf3;
-  --color-ink: #1f1747;
-  --color-muted: #6b6590;
-  --color-line: #e6dccb;
-  --color-edge: #1f1747;
+  /* Calm, low-glare palette: soft backgrounds, pastel accents, dark-but-not-black text. */
+  --color-paper: #f6f0e4;
+  --color-surface: #fbf8f1;
+  --color-ink: #2a2550;
+  --color-muted: #645e88;
+  --color-line: #e4dac8;
+  --color-edge: #a8a0d2;
 
-  --color-brand: #6d4aff;
-  --color-brand-dark: #5530e0;
-  --color-brand-ink: #5530e0;
+  --color-brand: #bfb5f2;
+  --color-brand-dark: #7f72d6;
+  --color-brand-ink: #5a4cb8;
 
-  --color-sun: #ffd43b;
-  --color-on-sun: #1f1747;
-  --color-pink: #ff8fb8;
-  --color-sky: #6fd3f5;
-  --color-mint: #7ee8c7;
+  --color-sun: #f6ebbf;
+  --color-on-sun: #332d5c;
+  --color-pink: #f6d5e0;
+  --color-sky: #cdeaf5;
+  --color-mint: #cbeee0;
 
-  --color-overdue: #d12b43;
-  --color-done: #068259;
+  --color-overdue: #c0415a;
+  --color-done: #2f8a6a;
 }
 
-/* Dark theme: overrides the same tokens when <html> has the "dark" class. */
+/* Dark theme: overrides the same tokens when <html> has the "dark" class.
+   Accents are muted a step further so they don't glow against the dark background. */
 .dark {
   color-scheme: dark;
-  --color-paper: #120e2b;
-  --color-surface: #1d1745;
-  --color-ink: #f1eeff;
-  --color-muted: #a9a3cf;
-  --color-line: #34296b;
-  --color-edge: #5a4db8;
-  --color-brand-ink: #b9a6ff;
-  --color-overdue: #ff7a90;
+  --color-paper: #15122b;
+  --color-surface: #201b43;
+  --color-ink: #e4e0f4;
+  --color-muted: #aaa4cd;
+  --color-line: #342d66;
+  --color-edge: #5f559e;
+  --color-brand: #a89df0;
+  --color-brand-dark: #8d80e0;
+  --color-brand-ink: #c3b6ff;
+  --color-sun: #e3d79f;
+  --color-pink: #e0bccb;
+  --color-sky: #a9d2e2;
+  --color-mint: #a9dbc8;
+  --color-overdue: #f08a9c;
+  --color-done: #5dbb98;
 }
 
 html { scroll-behavior: smooth; }
@@ -54,7 +63,7 @@ h1, h2, h3, .font-display { font-family: var(--font-display); }
 ::selection { background: var(--color-sun); color: var(--color-on-sun); }
 
 :focus-visible {
-  outline: 3px solid var(--color-brand);
+  outline: 3px solid var(--color-brand-dark);
   outline-offset: 2px;
 }
 
@@ -69,7 +78,7 @@ textarea {
 input:not([type="checkbox"]):not([type="radio"]):focus,
 select:focus,
 textarea:focus {
-  border-color: var(--color-brand);
+  border-color: var(--color-brand-dark);
 }
 
 @layer components {
@@ -77,22 +86,22 @@ textarea:focus {
   .sticker {
     border: 2px solid var(--color-edge);
     border-radius: 1rem;
-    box-shadow: 4px 4px 0 var(--color-edge);
+    box-shadow: 3px 3px 0 var(--color-edge);
   }
   .sticker-sm {
     border: 2px solid var(--color-edge);
     border-radius: 0.875rem;
-    box-shadow: 3px 3px 0 var(--color-edge);
+    box-shadow: 2px 2px 0 var(--color-edge);
   }
   /* Pressable button that lifts on hover and squishes on click */
   .btn {
     border: 2px solid var(--color-edge);
-    box-shadow: 3px 3px 0 var(--color-edge);
+    box-shadow: 2px 2px 0 var(--color-edge);
     transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.15s;
   }
   .btn:hover:not(:disabled) {
     transform: translate(-1px, -1px);
-    box-shadow: 4px 4px 0 var(--color-edge);
+    box-shadow: 3px 3px 0 var(--color-edge);
   }
   .btn:active:not(:disabled) {
     transform: translate(2px, 2px);
@@ -133,18 +142,27 @@ textarea:focus {
 .card-tape::before {
   content: ""; position: absolute; top: -13px; left: 50%; z-index: 5;
   width: 96px; height: 26px; transform: translateX(-50%) rotate(-3deg);
-  background: rgba(255, 212, 59, 0.85); border: 2px solid var(--color-edge);
+  background: rgba(246, 235, 191, 0.9); border: 2px solid var(--color-edge);
   border-radius: 4px; pointer-events: none;
 }
 .index-card {
-  color: #1f1747; background-color: #fffdf5;
+  --card-paper: #f0ebdc;
+  --card-rule: #dbe2e6;
+  --card-margin: #eec7d3;
+  color: var(--color-ink);
+  background-color: var(--card-paper);
   background-image:
-    linear-gradient(transparent 56px, #ff8fb8 56px, #ff8fb8 58px, transparent 58px),
-    repeating-linear-gradient(to bottom, transparent 0, transparent 31px, #cfe3ff 31px, #cfe3ff 32px);
+    linear-gradient(transparent 56px, var(--card-margin) 56px, var(--card-margin) 58px, transparent 58px),
+    repeating-linear-gradient(to bottom, transparent 0, transparent 31px, var(--card-rule) 31px, var(--card-rule) 32px);
   background-position: 0 0, 0 26px;
 }
+.dark .index-card {
+  --card-paper: #2a2552;
+  --card-rule: #3a3470;
+  --card-margin: #6b5586;
+}
 .answer-card {
-  background-image: radial-gradient(rgba(31, 23, 71, 0.14) 2px, transparent 2px);
+  background-image: radial-gradient(rgba(42, 37, 80, 0.08) 2px, transparent 2px);
   background-size: 18px 18px;
 }
 
@@ -185,64 +203,42 @@ textarea:focus {
 @keyframes leaf-sway { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
 @keyframes sparkle { 0%, 100% { transform: scale(0.2) rotate(0deg); opacity: 0; } 50% { transform: scale(1) rotate(45deg); opacity: 1; } }
 @keyframes zzz-float { 0%, 100% { transform: translateY(2px); opacity: 0.5; } 50% { transform: translateY(-4px); opacity: 1; } }
-.timer-glow { background: radial-gradient(circle at center, rgba(255, 90, 79, 0.18) 0%, rgba(255, 212, 59, 0.12) 45%, transparent 68%); }
+.timer-glow { background: radial-gradient(circle at center, rgba(244, 169, 160, 0.14) 0%, rgba(246, 235, 191, 0.10) 45%, transparent 68%); }
 
 /* Focus page extras */
 .timer-glow {
   position: absolute; inset: -6px; border-radius: 9999px; pointer-events: none; filter: blur(16px);
-  background: radial-gradient(circle, transparent 52%, rgba(255, 90, 79, 0.4) 62%, rgba(255, 212, 59, 0.16) 76%, transparent 88%);
+  background: radial-gradient(circle, transparent 52%, rgba(244, 169, 160, 0.30) 62%, rgba(246, 235, 191, 0.14) 76%, transparent 88%);
   transition: background 0.4s;
 }
-.timer-glow[data-mode="short"] { background: radial-gradient(circle, transparent 52%, rgba(126, 232, 199, 0.45) 62%, rgba(111, 211, 245, 0.18) 76%, transparent 88%); }
-.timer-glow[data-mode="long"] { background: radial-gradient(circle, transparent 52%, rgba(111, 211, 245, 0.45) 62%, rgba(109, 74, 255, 0.22) 76%, transparent 88%); }
+.timer-glow[data-mode="short"] { background: radial-gradient(circle, transparent 52%, rgba(174, 227, 207, 0.35) 62%, rgba(181, 223, 240, 0.16) 76%, transparent 88%); }
+.timer-glow[data-mode="long"] { background: radial-gradient(circle, transparent 52%, rgba(181, 223, 240, 0.35) 62%, rgba(191, 181, 242, 0.20) 76%, transparent 88%); }
 .float-bit { position: absolute; font-size: 1.75rem; pointer-events: none; animation: bob 3.2s ease-in-out infinite; }
 @keyframes bob { 0%, 100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-10px) rotate(6deg); } }
 .pulse-glow { animation: pulse-glow 1.8s ease-in-out infinite; }
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 3px 3px 0 var(--color-edge), 0 0 0 0 rgba(109, 74, 255, 0.55); }
-  50% { box-shadow: 3px 3px 0 var(--color-edge), 0 0 0 12px rgba(109, 74, 255, 0); }
+  0%, 100% { box-shadow: 3px 3px 0 var(--color-edge), 0 0 0 0 rgba(127, 114, 214, 0.40); }
+  50% { box-shadow: 3px 3px 0 var(--color-edge), 0 0 0 12px rgba(127, 114, 214, 0); }
 }
 .mini-tomato-pop { animation: mini-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
 @keyframes mini-pop { from { transform: scale(0.3) rotate(-20deg); } to { transform: scale(1) rotate(0); } }
 
 /* Billing meters */
 .meter-stripes {
-  background-image: repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.35) 0 8px, transparent 8px 16px);
+  background-image: repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.25) 0 8px, transparent 8px 16px);
   background-size: 22px 22px; animation: stripes 1.2s linear infinite;
 }
 @keyframes stripes { to { background-position: 22px 0; } }
 
-/* Pastel theme, scoped to the flashcards page (wrapper class "pastel").
-   Overrides the colour tokens locally, so the rest of the app keeps its look. */
-.pastel {
-  --color-edge: #a79fd0;
-  --color-on-sun: #3a3263;
-  --color-sun: #fbeab0;
-  --color-pink: #f8cfdc;
-  --color-sky: #c6e8f5;
-  --color-mint: #c4efe0;
-  --color-brand: #b9aef5;
-  --color-brand-dark: #a396ef;
-}
-.dark .pastel {
-  --color-edge: #6d63a8;
-  --color-sun: #eadba3;
-  --color-pink: #e6bfcf;
-  --color-sky: #aed6e6;
-  --color-mint: #aedfcc;
-  --color-brand: #a99df0;
-}
-.pastel .sticker { box-shadow: 3px 3px 0 var(--color-edge); }
-.pastel .sticker-sm { box-shadow: 2px 2px 0 var(--color-edge); }
-.pastel .btn { box-shadow: 2px 2px 0 var(--color-edge); }
-.pastel .btn:hover:not(:disabled) { box-shadow: 3px 3px 0 var(--color-edge); }
-.pastel .btn:active:not(:disabled) { box-shadow: 1px 1px 0 var(--color-edge); }
-.pastel .fun-card:hover { box-shadow: 4px 6px 0 var(--color-edge); }
-.pastel .index-card {
-  color: #3a3263; background-color: #fffcf4;
-  background-image:
-    linear-gradient(transparent 56px, var(--color-pink) 56px, var(--color-pink) 58px, transparent 58px),
-    repeating-linear-gradient(to bottom, transparent 0, transparent 31px, #e6eefa 31px, #e6eefa 32px);
-}
-.pastel .card-tape::before { background: rgba(251, 234, 176, 0.85); border-color: var(--color-edge); }
-.pastel .answer-card { background-image: radial-gradient(rgba(58, 50, 99, 0.07) 2px, transparent 2px); }
+/* Study mode motion */
+@keyframes card-in { from { opacity: 0; transform: translateY(14px) scale(0.98); } to { opacity: 1; transform: none; } }
+@keyframes fly-right { to { opacity: 0; transform: translateX(80px) rotate(4deg); } }
+@keyframes fly-left { to { opacity: 0; transform: translateX(-80px) rotate(-4deg); } }
+@keyframes pop-in { 0% { transform: scale(0.7); opacity: 0; } 70% { transform: scale(1.06); } 100% { transform: scale(1); opacity: 1; } }
+@keyframes confetti-fall { to { transform: translateY(105vh) rotate(540deg); opacity: 0.9; } }
+.card-in { animation: card-in 0.3s ease-out both; }
+.fly-right { animation: fly-right 0.38s ease-in forwards; }
+.fly-left { animation: fly-left 0.38s ease-in forwards; }
+.pop { animation: pop-in 0.3s ease-out both; }
+.star-pop { display: inline-block; animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.confetti-piece { animation-name: confetti-fall; animation-timing-function: ease-in; animation-fill-mode: forwards; }

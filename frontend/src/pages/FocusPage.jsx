@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import Icon from "../components/Icon";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import api from "../api";
@@ -9,13 +10,13 @@ import WeekChart from "../components/WeekChart";
 import { lastNDays, toISODate } from "../dates";
 import { MODES, formatClock, useFocus, useFocusSessions } from "../focusTimer";
 
-const MODE_EMOJI = { focus: "\uD83C\uDF45", short: "\u2615", long: "\uD83C\uDF34" };
+const MODE_ICON = { focus: "timer", short: "coffee", long: "moon" };
 
 // Each mode gets its own colours so switching feels like changing scenery.
 const MODE_THEME = {
-  focus: { tab: "bg-[#ff5a4f] text-white", ring: ["#ff5a4f", "#ff9f43", "#ffd43b"] },
-  short: { tab: "bg-mint text-on-sun", ring: ["#7ee8c7", "#6fd3f5"] },
-  long: { tab: "bg-sky text-on-sun", ring: ["#6fd3f5", "#6d4aff"] },
+  focus: { tab: "bg-[#f4b5ac] text-on-sun", ring: ["#f1a99f", "#f5c8a0", "#f1e2a6"] },
+  short: { tab: "bg-mint text-on-sun", ring: ["#a9dcc8", "#b5dff0"] },
+  long: { tab: "bg-sky text-on-sun", ring: ["#b5dff0", "#a89df0"] },
 };
 
 function MiniTomato({ filled }) {
@@ -23,9 +24,9 @@ function MiniTomato({ filled }) {
     <svg viewBox="0 0 40 40" width="30" height="30" aria-hidden="true" className={filled ? "mini-tomato-pop" : ""}>
       {filled ? (
         <>
-          <ellipse cx="20" cy="23" rx="15" ry="13" fill="#ee3b32" stroke="var(--color-edge)" strokeWidth="2.5" />
+          <ellipse cx="20" cy="23" rx="15" ry="13" fill="#e8847a" stroke="var(--color-edge)" strokeWidth="2.5" />
           <ellipse cx="14" cy="18" rx="4" ry="2.2" fill="#fff" opacity="0.45" transform="rotate(-30 14 18)" />
-          <path d="M20 11 C16 5 11 6 9 9 C13 9 16 11 18 13 Z M20 11 C24 5 29 6 31 9 C27 9 24 11 22 13 Z" fill="#4caf50" stroke="var(--color-edge)" strokeWidth="2" strokeLinejoin="round" />
+          <path d="M20 11 C16 5 11 6 9 9 C13 9 16 11 18 13 Z M20 11 C24 5 29 6 31 9 C27 9 24 11 22 13 Z" fill="#8cc79a" stroke="var(--color-edge)" strokeWidth="2" strokeLinejoin="round" />
         </>
       ) : (
         <>
@@ -35,18 +36,6 @@ function MiniTomato({ filled }) {
       )}
     </svg>
   );
-}
-
-function FloatBits() {
-  const bits = [
-    { e: "\uD83D\uDCDA", cls: "-left-3 top-6", d: "0s" },
-    { e: "\u270F\uFE0F", cls: "-right-3 top-10", d: "0.8s" },
-    { e: "\uD83E\uDDE0", cls: "-left-1 bottom-10", d: "1.6s" },
-    { e: "\u2B50", cls: "-right-1 bottom-6", d: "2.2s" },
-  ];
-  return bits.map((b) => (
-    <span key={b.e} aria-hidden="true" className={`float-bit hidden sm:block ${b.cls}`} style={{ animationDelay: b.d }}>{b.e}</span>
-  ));
 }
 
 function TaskChip({ selected, onClick, children, title }) {
@@ -154,15 +143,15 @@ export default function FocusPage() {
   const statusLabel = timer.status === "paused"
     ? "Napping... tap Resume"
     : timer.mode === "focus"
-      ? (running_ ? "Locked in! \uD83D\uDD25" : "Ready to focus?")
-      : (running_ ? "Break time, relax \u2728" : "Take a break?");
+      ? (running_ ? "Locked in" : "Ready to focus?")
+      : (running_ ? "Break time, relax" : "Take a break?");
   const hours = Math.floor(stats.todayMinutes / 60);
   const mins = stats.todayMinutes % 60;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Focus timer {"\uD83C\uDF45"}</h1>
+        <h1 className="text-3xl font-bold">Focus timer</h1>
         <p className="mt-1 text-muted">Work in short, focused rounds with breaks in between. Four rounds earns a long break.</p>
       </div>
 
@@ -179,17 +168,16 @@ export default function FocusPage() {
             {Object.entries(MODES).map(([id, m]) => (
               <button key={id} role="tab" aria-selected={timer.mode === id} disabled={running}
                 onClick={() => f.setMode(id)}
-                className={`rounded-lg px-4 py-1.5 text-sm font-bold transition-colors disabled:cursor-not-allowed ${
+                className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-bold transition-colors disabled:cursor-not-allowed ${
                   timer.mode === id ? MODE_THEME[id].tab : "text-muted hover:text-ink disabled:opacity-50"
                 }`}>
-                {MODE_EMOJI[id]} {m.label}
+                <Icon name={MODE_ICON[id]} className="size-4" /> {m.label}
               </button>
             ))}
           </div>
 
           <div className="relative mx-auto mt-6 w-fit max-w-full">
             <div className="timer-glow" data-mode={timer.mode} aria-hidden="true" />
-            <FloatBits />
             <TimerRing progress={progress} color={MODE_THEME[timer.mode].ring[0]} gradient={MODE_THEME[timer.mode].ring} fill="var(--color-surface)" size={260} stroke={14}>
               <TimerTomato progress={progress} status={timer.status} mode={timer.mode} size={116} />
               <span className="font-display text-4xl font-bold tabular-nums" role="timer" aria-live="off">
@@ -203,19 +191,19 @@ export default function FocusPage() {
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             {running ? (
-              <button onClick={f.pause} className="btn rounded-xl bg-sun px-8 py-3 font-display text-lg font-semibold text-on-sun">
-                {"\u23F8\uFE0F"} Pause
+              <button onClick={f.pause} className="btn inline-flex items-center gap-2 rounded-xl bg-sun px-8 py-3 font-display text-lg font-semibold text-on-sun">
+                <Icon name="pause" className="size-5" /> Pause
               </button>
             ) : (
-              <button onClick={f.start} className={`btn rounded-2xl bg-brand px-8 py-3 font-display text-lg font-semibold text-white ${idle ? "pulse-glow" : ""}`}>
-                {timer.status === "paused" ? "\u25B6\uFE0F Resume" : "\u25B6\uFE0F Start"}
+              <button onClick={f.start} className={`btn inline-flex items-center gap-2 rounded-2xl bg-brand px-8 py-3 font-display text-lg font-semibold text-on-sun ${idle ? "pulse-glow" : ""}`}>
+                <Icon name="play" filled className="size-5" /> {timer.status === "paused" ? "Resume" : "Start"}
               </button>
             )}
             <button onClick={f.reset} disabled={idle}
-              className="btn rounded-xl bg-surface px-5 py-3 font-bold disabled:opacity-50">{"\uD83D\uDD04"} Reset</button>
+              className="btn inline-flex items-center gap-2 rounded-xl bg-surface px-5 py-3 font-bold disabled:opacity-50"><Icon name="reset" className="size-4" /> Reset</button>
             <button onClick={f.skip}
-              className="rounded-xl px-4 py-3 font-bold text-muted hover:text-ink">
-              {"\u23ED\uFE0F"} Skip {timer.mode === "focus" ? "to break" : "break"}
+              className="inline-flex items-center gap-2 rounded-xl px-4 py-3 font-bold text-muted hover:text-ink">
+              <Icon name="skip" className="size-4" /> Skip {timer.mode === "focus" ? "to break" : "break"}
             </button>
           </div>
 
@@ -226,15 +214,15 @@ export default function FocusPage() {
           </div>
 
           <div className="mx-auto mt-6 max-w-md">
-            <div className="card-tape sticker-sm -rotate-1 bg-[#fff6c9] px-4 pb-3 pt-4 text-[#1f1747]">
-              <p className="text-xs font-bold uppercase tracking-wider opacity-70">{"\uD83D\uDCCC"} Now working on</p>
+            <div className="card-tape sticker-sm -rotate-1 bg-sun px-4 pb-3 pt-4 text-on-sun">
+              <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider opacity-70"><Icon name="pin" className="size-3.5" /> Now working on</p>
               <p className="mt-0.5 break-words font-display text-lg font-bold leading-snug">
-                {timer.taskId ? (taskTitle(timer.taskId) ?? "Selected task") : "Just focusing \uD83C\uDFA7"}
+                {timer.taskId ? (taskTitle(timer.taskId) ?? "Selected task") : "Just focusing"}
               </p>
             </div>
             <p id="focus-task-label" className="mt-4 text-sm font-bold text-muted">Pick something to focus on</p>
             <div role="radiogroup" aria-labelledby="focus-task-label" className="mt-2 flex max-h-32 flex-wrap gap-2 overflow-y-auto p-1">
-              <TaskChip selected={!timer.taskId} onClick={() => f.setTask(null)}>{"\uD83C\uDFA7"} Just focusing</TaskChip>
+              <TaskChip selected={!timer.taskId} onClick={() => f.setTask(null)}>Just focusing</TaskChip>
               {chipTasks.map((t) => (
                 <TaskChip key={t.id} selected={timer.taskId === t.id} onClick={() => f.setTask(t.id)} title={t.title}>{t.title}</TaskChip>
               ))}
@@ -248,11 +236,11 @@ export default function FocusPage() {
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-3">
             <div className="sticker-sm -rotate-1 bg-surface px-4 py-3 transition-transform hover:rotate-0 hover:-translate-y-1">
-              <p className="text-sm text-muted">{"\u23F1\uFE0F"} Focused today</p>
+              <p className="flex items-center gap-1.5 text-sm text-muted"><Icon name="clock" className="size-4" /> Focused today</p>
               <p className="font-display text-2xl font-bold">{hours ? `${hours}h ${mins}m` : `${mins}m`}</p>
             </div>
             <div className="sticker-sm rotate-1 bg-surface px-4 py-3 transition-transform hover:rotate-0 hover:-translate-y-1">
-              <p className="text-sm text-muted">{"\uD83C\uDF45"} Rounds today</p>
+              <p className="flex items-center gap-1.5 text-sm text-muted"><Icon name="timer" className="size-4" /> Rounds today</p>
               <p className="font-display text-2xl font-bold">{stats.today.length}</p>
             </div>
           </div>

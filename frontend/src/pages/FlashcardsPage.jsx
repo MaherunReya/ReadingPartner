@@ -3,12 +3,31 @@ import { useQueryClient } from "@tanstack/react-query";
 import api, { errorMessage } from "../api";
 import { useBilling } from "../billing";
 import Card from "../components/Card";
+import Icon from "../components/Icon";
 import {
-  DECK_COLORS, EMOJI, isDue, parseBulk, shuffle,
-  useAddCard, useBulkAdd, useCards, useCreateDeck, useDecks, useDeleteCard, useDeleteDeck, useGenerateCards, useReview, useUpdateCard,
+  DECK_COLORS, MAX_WORDS, countWords, isDue, parseBulk, shuffle, trimToWords,
+  useAddCard, useBulkAdd, useCards, useCreateDeck, useDecks, useDeleteCard, useDeleteDeck, useGenerateCards, useReview, useUpdateCard, useUpdateDeck,
 } from "../flashcards";
 
 /* ---------- Deck list ---------- */
+
+function ColorPicker({ value, onChange }) {
+  return (
+    <fieldset>
+      <legend className="text-sm font-bold text-muted">Colour</legend>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {Object.entries(DECK_COLORS).map(([id, c]) => (
+          <button key={id} type="button" aria-pressed={value === id} onClick={() => onChange(id)}
+            className={`${c.bg} rounded-full border-2 px-4 py-1.5 text-sm font-bold text-on-sun transition-transform ${
+              value === id ? "scale-110 border-edge shadow-[2px_2px_0_var(--color-edge)]" : "border-transparent opacity-80 hover:opacity-100"
+            }`}>
+            {c.label}
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
 
 function NewDeckForm({ onDone, onCancel }) {
   const create = useCreateDeck();
@@ -39,20 +58,8 @@ function NewDeckForm({ onDone, onCancel }) {
               className="mt-1 w-full border border-line bg-surface px-3 py-2" />
           </div>
         </div>
-        <fieldset>
-          <legend className="text-sm font-bold text-muted">Colour</legend>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {Object.entries(DECK_COLORS).map(([id, c]) => (
-              <button key={id} type="button" aria-pressed={color === id} onClick={() => setColor(id)}
-                className={`${c.bg} rounded-full border-2 px-4 py-1.5 text-sm font-bold text-on-sun transition-transform ${
-                  color === id ? "scale-110 border-edge shadow-[2px_2px_0_var(--color-edge)]" : "border-transparent opacity-80 hover:opacity-100"
-                }`}>
-                {c.emoji} {c.label}
-              </button>
-            ))}
-          </div>
-        </fieldset>
-        <p className="text-xs text-muted">Next step: upload your lecture or paste its notes to make flashcards.</p>
+        <ColorPicker value={color} onChange={setColor} />
+        <p className="text-xs text-muted">Next: choose to make the cards automatically from your notes, or write them yourself.</p>
         <div className="flex flex-wrap items-center gap-3">
           <button type="submit" disabled={!name.trim() || create.isPending}
             className="btn rounded-xl bg-brand px-5 py-2 font-display font-semibold text-on-sun disabled:opacity-50">
@@ -66,6 +73,45 @@ function NewDeckForm({ onDone, onCancel }) {
   );
 }
 
+function DeckDetailsForm({ deck, onDone }) {
+  const update = useUpdateDeck();
+  const [name, setName] = useState(deck.name);
+  const [subject, setSubject] = useState(deck.subject ?? "");
+  const [color, setColor] = useState(deck.color);
+
+  function submit(e) {
+    e.preventDefault();
+    if (!name.trim()) return;
+    update.mutate({ id: deck.id, name: name.trim(), subject: subject.trim() || null, color }, { onSuccess: onDone });
+  }
+
+  return (
+    <Card title="Edit details">
+      <form onSubmit={submit} className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label htmlFor="edit-deck-name" className="text-sm font-bold text-muted">Name</label>
+            <input id="edit-deck-name" autoFocus maxLength={100} value={name} onChange={(e) => setName(e.target.value)}
+              className="mt-1 w-full border border-line bg-surface px-3 py-2" />
+          </div>
+          <div>
+            <label htmlFor="edit-deck-subject" className="text-sm font-bold text-muted">Course (optional)</label>
+            <input id="edit-deck-subject" maxLength={100} value={subject} onChange={(e) => setSubject(e.target.value)}
+              className="mt-1 w-full border border-line bg-surface px-3 py-2" />
+          </div>
+        </div>
+        <ColorPicker value={color} onChange={setColor} />
+        <div className="flex flex-wrap items-center gap-3">
+          <button type="submit" disabled={!name.trim() || update.isPending}
+            className="btn rounded-xl bg-brand px-5 py-2 font-display font-semibold text-on-sun disabled:opacity-50">Save changes</button>
+          <button type="button" onClick={onDone} className="rounded-xl px-3 py-2 font-bold text-muted hover:text-ink">Cancel</button>
+          {update.isError && <span role="alert" className="text-sm text-overdue">{errorMessage(update.error)}</span>}
+        </div>
+      </form>
+    </Card>
+  );
+}
+
 function DeckTile({ deck, onOpen, onStudy }) {
   const c = DECK_COLORS[deck.color] ?? DECK_COLORS.sun;
   const pct = deck.card_count ? Math.round((deck.mastered_count / deck.card_count) * 100) : 0;
@@ -73,7 +119,7 @@ function DeckTile({ deck, onOpen, onStudy }) {
   return (
     <div className="sticker flex flex-col overflow-hidden bg-surface transition-transform duration-200 hover:-translate-y-1 hover:-rotate-1">
       <div className={`${c.bg} flex items-center justify-between border-b-2 border-edge px-4 py-3 text-on-sun`}>
-        <span className="text-3xl" aria-hidden="true">{c.emoji}</span>
+        <Icon name="cards" className="size-7" />
         {deck.due_count > 0 ? (
           <span className="rounded-full border-2 border-edge bg-surface px-2.5 py-0.5 text-xs font-bold text-ink">
             {deck.due_count} due
@@ -142,7 +188,7 @@ function DeckList({ onOpen, onStudy }) {
         <p role="alert" className="text-overdue">{errorMessage(decks.error)}</p>
       ) : decks.data.length === 0 && !creating ? (
         <div className="sticker bg-surface p-8 text-center">
-          <p className="text-5xl" aria-hidden="true">{"\uD83C\uDCCF"}</p>
+          <div className="flex justify-center text-muted"><Icon name="cards" className="size-12" strokeWidth={1.4} /></div>
           <p className="mt-3 font-display text-xl font-bold">No lectures yet</p>
           <p className="mt-1 text-muted">Add your first lecture, then turn its notes into flashcards.</p>
         </div>
@@ -161,7 +207,7 @@ function BoxDots({ box }) {
   return (
     <span className="inline-flex items-center gap-0.5" title={`Box ${box} of 5`} aria-label={`Box ${box} of 5`}>
       {[1, 2, 3, 4, 5].map((n) => (
-        <span key={n} className={`size-1.5 rounded-full ${n <= box ? "bg-brand" : "bg-edge/30"}`} />
+        <span key={n} className={`size-1.5 rounded-full ${n <= box ? "bg-brand-dark" : "bg-edge/40"}`} />
       ))}
     </span>
   );
@@ -207,32 +253,32 @@ function CardRow({ card, deckId, index = 0 }) {
     <li className="fun-card index-card card-tape sticker-sm flex flex-col"
       style={{ "--tilt": TILTS[index % TILTS.length], "--d": `${Math.min(index, 12) * 45}ms` }}>
       <div className="flex h-14 items-center justify-between px-4 pt-2">
-        <span className={`fun-badge ${BADGE_COLORS[index % BADGE_COLORS.length]} rounded-full border-2 border-edge px-3 py-0.5 font-display text-sm font-bold`}>
-          {"\uD83C\uDCCF"} Card {index + 1}
+        <span className={`fun-badge ${BADGE_COLORS[index % BADGE_COLORS.length]} rounded-full border-2 border-edge px-3 py-0.5 font-display text-sm font-bold text-on-sun`}>
+          Card {index + 1}
         </span>
-        <span className="flex items-center gap-2 text-xs font-bold text-on-sun/70">
+        <span className="flex items-center gap-2 text-xs font-bold text-muted">
           Level {card.box}/5 <BoxDots box={card.box} />
         </span>
       </div>
       <div className="flex-1 space-y-3 px-4 pb-3 pt-3">
         <p className="whitespace-pre-wrap break-words font-display text-lg font-bold leading-snug">
-          <span aria-hidden="true">{"\u2753"} </span>{card.front}
+          {card.front}
         </p>
-        <div className={`fun-note ${NOTE_COLORS[index % NOTE_COLORS.length]} rounded-xl border-2 border-edge p-3 shadow-[2px_2px_0_var(--color-edge)]`}>
+        <div className={`fun-note ${NOTE_COLORS[index % NOTE_COLORS.length]} rounded-xl border-2 border-edge p-3 text-on-sun shadow-[2px_2px_0_var(--color-edge)]`}>
           <p className="whitespace-pre-wrap break-words text-sm font-semibold leading-relaxed">
-            <span aria-hidden="true">{"\uD83D\uDCA1"} </span>{card.back}
+            {card.back}
           </p>
         </div>
       </div>
       <div className="flex justify-end gap-2 px-4 pb-3">
         <button onClick={() => setEditing(true)}
-          className="rounded-full border-2 border-edge bg-white/70 px-3 py-0.5 text-sm font-bold text-on-sun transition-transform hover:-translate-y-0.5 hover:bg-sun">
-          {"\u270F\uFE0F"} Edit
+          className="inline-flex items-center gap-1.5 rounded-full border-2 border-edge bg-surface/60 px-3 py-0.5 text-sm font-bold text-ink transition-transform hover:-translate-y-0.5 hover:bg-sun hover:text-on-sun">
+          <Icon name="pencil" className="size-4" /> Edit
         </button>
         <button onClick={() => remove.mutate(card.id)} disabled={remove.isPending}
           aria-label={`Delete card: ${card.front}`}
-          className="rounded-full border-2 border-edge bg-white/70 px-3 py-0.5 text-sm font-bold text-on-sun transition-transform hover:-translate-y-0.5 hover:bg-pink disabled:opacity-50">
-          {"\uD83D\uDDD1\uFE0F"} Delete
+          className="inline-flex items-center gap-1.5 rounded-full border-2 border-edge bg-surface/60 px-3 py-0.5 text-sm font-bold text-ink transition-transform hover:-translate-y-0.5 hover:bg-pink hover:text-on-sun disabled:opacity-50">
+          <Icon name="trash" className="size-4" /> Delete
         </button>
       </div>
     </li>
@@ -251,6 +297,9 @@ function NotesPanel({ bulk, onDone }) {
   const sets = billing.data?.usage.flashcards;
   const setsLeft = sets ? Math.max(0, sets.limit - sets.used) : null;
   const countOptions = [5, 10, 15, 20, 30].filter((n) => !plan || n <= plan.max_cards);
+  const maxWords = plan?.max_notes_words ?? MAX_WORDS;
+  const words = useMemo(() => countWords(notes), [notes]);
+  const over = words > maxWords;
 
   async function onFile(e) {
     const file = e.target.files?.[0];
@@ -263,7 +312,9 @@ function NotesPanel({ bulk, onDone }) {
       fd.append("file", file);
       const { data } = await api.post("/ai/extract", fd);
       setNotes(data.text);
-      setFileMsg(data.truncated ? "Loaded the first part of this file (it was long). Split big lectures into parts." : `Loaded ${file.name}`);
+      setFileMsg(data.truncated
+        ? `Loaded the first ${maxWords.toLocaleString()} words of ${file.name}. Make cards from this part, then upload the rest separately.`
+        : `Loaded ${file.name}`);
     } catch (err) {
       setFileMsg(errorMessage(err));
     } finally {
@@ -274,17 +325,35 @@ function NotesPanel({ bulk, onDone }) {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-3">
-        <label className="btn cursor-pointer rounded-xl bg-sun px-4 py-2 text-sm font-bold text-on-sun focus-within:ring-4 focus-within:ring-brand">
-          {reading ? "Reading file..." : "\uD83D\uDCCE Upload PDF / PowerPoint / .txt"}
+        <label className="btn inline-flex cursor-pointer items-center gap-2 rounded-xl bg-sun px-4 py-2 text-sm font-bold text-on-sun focus-within:ring-4 focus-within:ring-brand-dark">
+          {reading ? "Reading file..." : <><Icon name="upload" className="size-4" /> Upload PDF / PowerPoint / .txt</>}
           <input type="file" accept=".pdf,.pptx,.txt,.md" onChange={onFile} disabled={reading} className="sr-only" />
         </label>
         {fileMsg && <span role="status" className="text-sm text-muted">{fileMsg}</span>}
       </div>
       <div>
-        <label htmlFor="lecture-notes" className="text-sm font-bold text-muted">Paste your lecture notes or slide text</label>
-        <textarea id="lecture-notes" rows={8} maxLength={20000} value={notes} onChange={(e) => setNotes(e.target.value)}
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <label htmlFor="lecture-notes" className="text-sm font-bold text-muted">Paste your lecture notes or slide text</label>
+          <span className={`text-xs font-bold tabular-nums ${over ? "text-overdue" : "text-muted"}`}>
+            {words.toLocaleString()} / {maxWords.toLocaleString()} words
+          </span>
+        </div>
+        <textarea id="lecture-notes" rows={8} value={notes} onChange={(e) => setNotes(e.target.value)}
+          aria-describedby="notes-limit"
           placeholder="Paste a lecture's notes here and AI will turn them into flashcards..."
-          className="mt-1 w-full resize-y border border-line bg-surface px-3 py-2" />
+          className={`mt-1 w-full resize-y border bg-surface px-3 py-2 ${over ? "border-overdue" : "border-line"}`} />
+        <p id="notes-limit" className="mt-1 text-xs text-muted">
+          {over ? (
+            <>
+              <span className="font-bold text-overdue">{(words - maxWords).toLocaleString()} words over the limit.</span>{" "}
+              <button type="button" onClick={() => setNotes(trimToWords(notes, maxWords))}
+                className="font-bold text-brand-ink underline">Trim to {maxWords.toLocaleString()} words</button>{" "}
+              or split the lecture into parts.
+            </>
+          ) : (
+            <>Up to {maxWords.toLocaleString()} words at a time. Got more? Make cards from one part, then come back for the next.</>
+          )}
+        </p>
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <label className="flex items-center gap-2 text-sm font-bold text-muted">
@@ -293,14 +362,14 @@ function NotesPanel({ bulk, onDone }) {
             {countOptions.map((n) => <option key={n} value={n}>{n}</option>)}
           </select>
         </label>
-        <button type="button" disabled={notes.trim().length < 20 || gen.isPending || setsLeft === 0}
+        <button type="button" disabled={notes.trim().length < 20 || over || gen.isPending || setsLeft === 0}
           onClick={() => gen.mutate({ text: notes, count }, { onSuccess: (cards) => { setDraft(cards); billing.refetch(); } })}
-          className="btn rounded-xl bg-brand px-5 py-2 font-display font-semibold text-on-sun disabled:opacity-50">
-          {gen.isPending ? "Making cards..." : "\u2728 Make flashcards"}
+          className="btn inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-2 font-display font-semibold text-on-sun disabled:opacity-50">
+          {gen.isPending ? "Making cards..." : <><Icon name="sparkle" className="size-4" /> Make flashcards</>}
         </button>
         {setsLeft !== null && (
           <span className={`text-xs font-bold ${setsLeft === 0 ? "text-overdue" : "text-muted"}`}>
-            {"\u26A1"} {setsLeft} of {sets.limit} AI sets left this month
+            <Icon name="bolt" className="size-3.5" /> {setsLeft} of {sets.limit} AI sets left this month
           </span>
         )}
         {gen.isError && <span role="alert" className="text-sm text-overdue">{errorMessage(gen.error)}</span>}
@@ -319,15 +388,21 @@ function NotesPanel({ bulk, onDone }) {
             ))}
           </ul>
           <button type="button" disabled={bulk.isPending}
-            onClick={() => bulk.mutate(draft, { onSuccess: () => { setDraft([]); setNotes(""); onDone(); } })}
+            onClick={() => bulk.mutate(draft, { onSuccess: (saved) => { setDraft([]); setNotes(""); setFileMsg(""); onDone(saved.length); } })}
             className="btn rounded-xl bg-mint px-5 py-2 font-display font-semibold text-on-sun">
             Add {draft.length} card{draft.length === 1 ? "" : "s"}
           </button>
+          {bulk.isError && <span role="alert" className="ml-3 text-sm text-overdue">{errorMessage(bulk.error)}</span>}
         </div>
       )}
     </div>
   );
 }
+
+const MAKE_MODES = [
+  { id: "auto", icon: "sparkle", title: "Automatic", body: "Upload or paste your notes and AI drafts the cards. You look them over before anything is saved." },
+  { id: "manual", icon: "pencil", title: "By myself", body: "Write each question and answer yourself, one at a time, or paste a whole list at once." },
+];
 
 function DeckEditor({ deckId, onBack, onStudy }) {
   const decks = useDecks();
@@ -337,7 +412,9 @@ function DeckEditor({ deckId, onBack, onStudy }) {
   const deleteDeck = useDeleteDeck();
   const deck = decks.data?.find((d) => d.id === deckId);
 
-  const [tab, setTab] = useState("notes");
+  const [editing, setEditing] = useState(false);
+  const [mode, setMode] = useState("auto"); // "auto" = AI from notes, "manual" = student writes them
+  const [tab, setTab] = useState("one");
   const [front, setFront] = useState("");
   const [back, setBack] = useState("");
   const [text, setText] = useState("");
@@ -346,8 +423,8 @@ function DeckEditor({ deckId, onBack, onStudy }) {
   const parsed = useMemo(() => parseBulk(text), [text]);
 
   function submitOne(e) {
-    e.preventDefault();
-    if (!front.trim() || !back.trim()) return;
+    e?.preventDefault();
+    if (!front.trim() || !back.trim() || addCard.isPending) return;
     addCard.mutate({ front: front.trim(), back: back.trim() }, {
       onSuccess: () => { setFront(""); setBack(""); setAdded((n) => n + 1); frontRef.current?.focus(); },
     });
@@ -376,78 +453,113 @@ function DeckEditor({ deckId, onBack, onStudy }) {
   }
 
   const c = DECK_COLORS[deck.color] ?? DECK_COLORS.sun;
-  const mode = deck.due_count > 0 ? "due" : "all";
+  const studyMode = deck.due_count > 0 ? "due" : "all";
 
   return (
     <div className="space-y-6">
       <button onClick={onBack} className="text-sm font-bold text-muted hover:text-ink">&larr; All lectures</button>
 
-      <div className={`${c.bg} sticker flex flex-wrap items-center gap-4 p-5 text-on-sun`}>
-        <span className="text-4xl" aria-hidden="true">{c.emoji}</span>
-        <div className="min-w-0 flex-1">
-          <h1 className="break-words text-3xl font-bold leading-tight">{deck.name}</h1>
-          <p className="text-sm font-semibold text-on-sun/70">
-            {deck.subject ? `${deck.subject} \u00B7 ` : ""}{deck.card_count} card{deck.card_count === 1 ? "" : "s"} &middot; {deck.due_count} due
-          </p>
+      {editing ? (
+        <DeckDetailsForm deck={deck} onDone={() => setEditing(false)} />
+      ) : (
+        <div className={`${c.bg} sticker flex flex-wrap items-center gap-4 p-5 text-on-sun`}>
+          <Icon name="cards" className="size-9" strokeWidth={1.6} />
+          <div className="min-w-0 flex-1">
+            <h1 className="break-words text-3xl font-bold leading-tight">{deck.name}</h1>
+            <p className="text-sm font-semibold text-on-sun/70">
+              {deck.subject ? `${deck.subject} \u00B7 ` : ""}{deck.card_count} card{deck.card_count === 1 ? "" : "s"} &middot; {deck.due_count} due
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => setEditing(true)}
+              className="btn inline-flex items-center gap-2 rounded-xl bg-surface px-4 py-2.5 font-display text-base font-semibold text-ink"><Icon name="pencil" className="size-4" /> Edit</button>
+            <button onClick={() => onStudy(deckId, studyMode)} disabled={deck.card_count === 0}
+              className="btn rounded-xl bg-brand px-5 py-2.5 font-display text-lg font-semibold text-on-sun disabled:opacity-50">
+              {deck.due_count > 0 ? `Study ${deck.due_count} due` : "Practice all"}
+            </button>
+          </div>
         </div>
-        <button onClick={() => onStudy(deckId, mode)} disabled={deck.card_count === 0}
-          className="btn rounded-xl bg-brand px-5 py-2.5 font-display text-lg font-semibold text-on-sun disabled:opacity-50">
-          {deck.due_count > 0 ? `Study ${deck.due_count} due` : "Practice all"}
-        </button>
-      </div>
+      )}
 
       <Card title="Add cards">
-        <div className="mb-4 flex gap-2" role="tablist">
-          {[["notes", "\u2728 From notes"], ["one", "One at a time"], ["bulk", "Paste many"]].map(([id, label]) => (
-            <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
-              className={`rounded-full px-4 py-1.5 text-sm font-bold ${tab === id ? "bg-brand text-on-sun" : "text-muted hover:bg-line/60"}`}>
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {tab === "notes" ? (
-          <NotesPanel bulk={bulk} onDone={() => setTab("one")} />
-        ) : tab === "one" ? (
-          <form onSubmit={submitOne} className="space-y-3">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label htmlFor="card-front" className="text-sm font-bold text-muted">Front (question or term)</label>
-                <textarea id="card-front" ref={frontRef} rows={3} maxLength={2000} value={front} onChange={(e) => setFront(e.target.value)}
-                  placeholder="What does TCP's three-way handshake do?"
-                  className="mt-1 w-full resize-y border border-line bg-surface px-3 py-2" />
-              </div>
-              <div>
-                <label htmlFor="card-back" className="text-sm font-bold text-muted">Back (answer)</label>
-                <textarea id="card-back" rows={3} maxLength={2000} value={back} onChange={(e) => setBack(e.target.value)}
-                  placeholder="Sets up a reliable connection: SYN, SYN-ACK, ACK."
-                  className="mt-1 w-full resize-y border border-line bg-surface px-3 py-2" />
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <button type="submit" disabled={!front.trim() || !back.trim() || addCard.isPending}
-                className="btn rounded-xl bg-brand px-5 py-2 font-display font-semibold text-on-sun disabled:opacity-50">Add card</button>
-              {added > 0 && <span role="status" className="text-sm font-bold text-done">{added} added this visit</span>}
-              {addCard.isError && <span role="alert" className="text-sm text-overdue">{errorMessage(addCard.error)}</span>}
-            </div>
-          </form>
-        ) : (
-          <form onSubmit={submitBulk} className="space-y-3">
-            <div>
-              <label htmlFor="bulk" className="text-sm font-bold text-muted">One card per line: front :: back</label>
-              <textarea id="bulk" rows={7} value={text} onChange={(e) => setText(e.target.value)}
-                placeholder={"OSI layer 3 :: Network (IP, routing)\nOSI layer 4 :: Transport (TCP, UDP)\nWhat does DHCP do? :: Hands out IP addresses automatically"}
-                className="mt-1 w-full resize-y border border-line bg-surface px-3 py-2 font-mono text-sm" />
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <button type="submit" disabled={!parsed.length || bulk.isPending}
-                className="btn rounded-xl bg-brand px-5 py-2 font-display font-semibold text-on-sun disabled:opacity-50">
-                {parsed.length ? `Add ${parsed.length} card${parsed.length === 1 ? "" : "s"}` : "Add cards"}
+        <fieldset className="mb-5">
+          <legend className="text-sm font-bold text-muted">How do you want to make your cards?</legend>
+          <div className="mt-2 grid gap-3 sm:grid-cols-2" role="radiogroup">
+            {MAKE_MODES.map((m) => (
+              <button key={m.id} type="button" role="radio" aria-checked={mode === m.id} onClick={() => setMode(m.id)}
+                className={`sticker-sm p-4 text-left transition-colors ${mode === m.id ? "bg-brand text-on-sun" : "bg-surface hover:bg-line/40"}`}>
+                <span className="inline-flex items-center gap-2 font-display text-lg font-bold"><Icon name={m.icon} className="size-5" /> {m.title}</span>
+                <span className={`mt-1 block text-sm ${mode === m.id ? "text-on-sun/80" : "text-muted"}`}>{m.body}</span>
               </button>
-              {text.trim() && !parsed.length && <span className="text-sm text-muted">Put :: between the front and the back of each line.</span>}
-              {bulk.isError && <span role="alert" className="text-sm text-overdue">{errorMessage(bulk.error)}</span>}
+            ))}
+          </div>
+        </fieldset>
+
+        {added > 0 && (
+          <div role="status" className="mb-5 flex flex-wrap items-center gap-3 rounded-xl border-2 border-edge bg-mint px-4 py-3 text-on-sun">
+            <span className="inline-flex items-center gap-2 font-bold"><Icon name="check" className="size-5" /> {added} card{added === 1 ? "" : "s"} added this visit.</span>
+            <span className="text-sm">Add as many more as you like.</span>
+            <button type="button" onClick={() => onStudy(deckId, studyMode)}
+              className="btn ml-auto rounded-xl bg-surface px-3 py-1.5 text-sm font-bold text-ink">Study now</button>
+          </div>
+        )}
+
+        {mode === "auto" ? (
+          <NotesPanel bulk={bulk} onDone={(n) => setAdded((a) => a + n)} />
+        ) : (
+          <div className="space-y-4">
+            <div className="flex gap-2" role="tablist">
+              {[["one", "One at a time"], ["bulk", "Paste many"]].map(([id, label]) => (
+                <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
+                  className={`rounded-full px-4 py-1.5 text-sm font-bold ${tab === id ? "bg-brand text-on-sun" : "text-muted hover:bg-line/60"}`}>
+                  {label}
+                </button>
+              ))}
             </div>
-          </form>
+
+            {tab === "one" ? (
+              <form onSubmit={submitOne} className="space-y-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="card-front" className="text-sm font-bold text-muted">Front (question or term)</label>
+                    <textarea id="card-front" ref={frontRef} rows={3} maxLength={2000} value={front} onChange={(e) => setFront(e.target.value)}
+                      placeholder="What does TCP's three-way handshake do?"
+                      className="mt-1 w-full resize-y border border-line bg-surface px-3 py-2" />
+                  </div>
+                  <div>
+                    <label htmlFor="card-back" className="text-sm font-bold text-muted">Back (answer)</label>
+                    <textarea id="card-back" rows={3} maxLength={2000} value={back} onChange={(e) => setBack(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) submitOne(e); }}
+                      placeholder="Sets up a reliable connection: SYN, SYN-ACK, ACK."
+                      className="mt-1 w-full resize-y border border-line bg-surface px-3 py-2" />
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <button type="submit" disabled={!front.trim() || !back.trim() || addCard.isPending}
+                    className="btn rounded-xl bg-brand px-5 py-2 font-display font-semibold text-on-sun disabled:opacity-50">Add card</button>
+                  <span className="text-xs text-muted">The form clears so you can add the next one. Tip: Ctrl+Enter adds too.</span>
+                  {addCard.isError && <span role="alert" className="text-sm text-overdue">{errorMessage(addCard.error)}</span>}
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={submitBulk} className="space-y-3">
+                <div>
+                  <label htmlFor="bulk" className="text-sm font-bold text-muted">One card per line: front :: back</label>
+                  <textarea id="bulk" rows={7} value={text} onChange={(e) => setText(e.target.value)}
+                    placeholder={"OSI layer 3 :: Network (IP, routing)\nOSI layer 4 :: Transport (TCP, UDP)\nWhat does DHCP do? :: Hands out IP addresses automatically"}
+                    className="mt-1 w-full resize-y border border-line bg-surface px-3 py-2 font-mono text-sm" />
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <button type="submit" disabled={!parsed.length || bulk.isPending}
+                    className="btn rounded-xl bg-brand px-5 py-2 font-display font-semibold text-on-sun disabled:opacity-50">
+                    {parsed.length ? `Add ${parsed.length} card${parsed.length === 1 ? "" : "s"}` : "Add cards"}
+                  </button>
+                  {text.trim() && !parsed.length && <span className="text-sm text-muted">Put :: between the front and the back of each line.</span>}
+                  {bulk.isError && <span role="alert" className="text-sm text-overdue">{errorMessage(bulk.error)}</span>}
+                </div>
+              </form>
+            )}
+          </div>
         )}
       </Card>
 
@@ -583,11 +695,11 @@ function StudySession({ deck, initialCards, onExit }) {
       <div className="mx-auto max-w-lg space-y-6 text-center">
         <Confetti />
         <div className="sticker bg-surface p-8">
-          <p className="text-6xl" aria-hidden="true">{pct >= 90 ? EMOJI.trophy : pct >= 60 ? EMOJI.party : EMOJI.muscle}</p>
-          <div className="mt-3 flex justify-center gap-1 text-3xl" aria-label={`${stars} out of 3 stars`}>
+          <div className="flex justify-center text-brand-dark"><Icon name={pct >= 90 ? "trophy" : pct >= 60 ? "check" : "bolt"} className="size-14" strokeWidth={1.4} /></div>
+          <div className="mt-4 flex justify-center gap-1" aria-label={`${stars} out of 3 stars`}>
             {[1, 2, 3].map((n) => (
-              <span key={n} className={n <= stars ? "star-pop" : "opacity-25 grayscale"}
-                style={{ animationDelay: `${n * 0.18}s` }} aria-hidden="true">{EMOJI.star}</span>
+              <span key={n} className={n <= stars ? "star-pop text-brand-dark" : "text-edge/50"}
+                style={{ animationDelay: `${n * 0.18}s` }} aria-hidden="true"><Icon name="star" filled={n <= stars} className="size-8" /></span>
             ))}
           </div>
           <h2 className="mt-3 text-3xl font-bold">{message}</h2>
@@ -646,9 +758,9 @@ function StudySession({ deck, initialCards, onExit }) {
         <div className="card-tape">
           <div className="sticker index-card relative flex min-h-48 cursor-pointer flex-col items-center justify-center p-6 pb-9 pt-10 text-center"
             onClick={() => !exit && setFlipped((f) => !f)}>
-            <span className="absolute left-4 top-3 text-xs font-bold uppercase tracking-widest text-on-sun/60">Question</span>
+            <span className="absolute left-4 top-3 text-xs font-bold uppercase tracking-widest text-muted">Question</span>
             <p className="whitespace-pre-wrap break-words font-display text-2xl font-semibold leading-snug sm:text-3xl">{current.front}</p>
-            {!flipped && <span className="absolute bottom-3 text-xs font-bold text-on-sun/60">tap to show answer</span>}
+            {!flipped && <span className="absolute bottom-3 text-xs font-bold text-muted">tap to show answer</span>}
           </div>
         </div>
         {flipped && (
@@ -701,7 +813,7 @@ function StudyLoader({ deckId, mode, onExit }) {
     return (
       <div className="mx-auto max-w-md space-y-4 text-center">
         <div className="sticker bg-surface p-8">
-          <p className="text-5xl" aria-hidden="true">{EMOJI.party}</p>
+          <div className="flex justify-center text-done"><Icon name="check" className="size-12" strokeWidth={1.6} /></div>
           <h2 className="mt-3 text-2xl font-bold">All caught up!</h2>
           <p className="mt-1 text-muted">Nothing is due in this lecture right now.</p>
         </div>
@@ -739,5 +851,5 @@ export default function FlashcardsPage() {
     page = <DeckList onOpen={(id) => setView({ type: "deck", id })}
       onStudy={(id, mode) => setView({ type: "study", id, mode, from: "decks" })} />;
   }
-  return <div className="pastel">{page}</div>;
+  return page;
 }

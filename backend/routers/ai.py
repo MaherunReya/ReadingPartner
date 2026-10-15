@@ -61,8 +61,16 @@ def _ask(system: str, messages: list[dict], max_tokens: int) -> str:
     raise HTTPException(502, "The AI is busy right now. Try again in a minute.") from last
 
 
+MAX_WORDS = 8000  # one source (pasted or uploaded) can be at most this many words
+
+
+def count_words(text: str) -> int:
+    return len(text.split())
+
+
 class CardsIn(BaseModel):
-    text: str = Field(min_length=20, max_length=20000)
+    # Character cap is only a safety net; the real limit is MAX_WORDS, checked below.
+    text: str = Field(min_length=20, max_length=200000)
     count: int = Field(default=10, ge=3, le=30)
 
 
@@ -92,9 +100,12 @@ def _parse_cards(raw: str, limit: int) -> list[dict]:
 @router.post("/flashcards")
 def make_flashcards(data: CardsIn, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
     plan = usage.plan_for(db, user)
-    if len(data.text) > plan["max_notes_chars"]:
-        extra = " Upgrade to Pro for longer notes." if plan["id"] == "free" else ""
-        raise HTTPException(422, f"Your plan takes notes up to {plan['max_notes_chars']:,} characters. Split the lecture into parts.{extra}")
+    words = count_words(data.text)
+    if words > plan["max_notes_words"]:
+        raise HTTPException(
+            422,
+            f"Notes can be up to {plan['max_notes_words']:,} words and yours has {words:,}. Split the lecture into parts.",
+        )
     usage.check(db, user, plan, "flashcards")
 
     count = min(data.count, plan["max_cards"])
@@ -110,7 +121,6 @@ def make_flashcards(data: CardsIn, db: Session = Depends(get_db), user: models.U
 
 
 MAX_UPLOAD = 15 * 1024 * 1024  # 15 MB
-MAX_CHARS = 20000  # matches the notes box on the flashcards page
 
 
 def _extract_text(name: str, data: bytes) -> str:
@@ -149,4 +159,9 @@ def extract_text(file: UploadFile = File(...), user: models.User = Depends(get_c
     text = re.sub(r"\n{3,}", "\n\n", text).strip()
     if len(text) < 20:
         raise HTTPException(422, "No text found. Scanned or image-only slides can't be read, so paste the text instead.")
-    return {"text": text[:MAX_CHARS], "truncated": len(text) > MAX_CHARS}
+    # Keep the first MAX_WORDS words (whitespace preserved) so the notes box accepts it as-is.
+    matches = list(re.finditer(r"\S+", text))
+    truncated = len(matches) > MAX_WORDS
+    if truncated:
+        text = text[: matches[MAX_WORDS - 1].end()]
+    return {"text": text, "truncated": truncated, "words": min(len(matches), MAX_WORDS), "max_words": MAX_WORDS}

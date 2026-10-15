@@ -1,40 +1,83 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../auth";
+import Icon from "../components/Icon";
 import LogoLink from "../components/LogoLink";
 import ProgressRing from "../components/ProgressRing";
 import ThemeToggle from "../components/ThemeToggle";
 
-const WORDS = ["Assignments", "Labs", "Exams", "Thesis", "Group projects", "Quizzes", "Presentations", "Reports"];
+const WORDS = ["Lectures", "Slides", "Definitions", "Formulas", "Exams", "Quizzes", "Vocabulary", "Revision"];
 
 const FEATURES = [
-  { icon: "\u23F0", tint: "bg-sun", title: "Deadlines at a glance",
-    body: "Add a subject and a due date in seconds. Quick chips for Today, Tomorrow and Next week, and overdue work turns red so nothing sneaks up." },
-  { icon: "\uD83D\uDCC8", tint: "bg-sky", title: "Progress you can see",
+  { icon: "cards", tint: "bg-mint", title: "Flashcards",
+    body: "Turn a lecture into cards automatically or write them yourself. Cards you miss come back sooner, so the hard ones stick." },
+  { icon: "note", tint: "bg-sun", title: "Notes",
+    body: "Short notes tied to a subject. Pin the ones you need most, colour-code the rest, and search them in a second." },
+  { icon: "clock", tint: "bg-pink", title: "Deadlines at a glance",
+    body: "Add a subject and a due date in seconds. Overdue work turns red so nothing sneaks up on you." },
+  { icon: "chart", tint: "bg-sky", title: "Progress you can see",
     body: "A completion ring, a weekly chart and a bar for every subject turn your to-do list into a scoreboard." },
-  { icon: "\uD83D\uDD25", tint: "bg-pink", title: "Streaks that feel good",
+  { icon: "flame", tint: "bg-pink", title: "Streaks that feel good",
     body: "Finish one task a day to keep your streak alive. Small wins add up faster than you think." },
-  { icon: "\uD83D\uDD4C", tint: "bg-mint", title: "Prayer tracker",
-    body: "Prayer times for your city, a five-prayer checklist, a weekly grid and a full-day streak, right beside your study plan." },
-  { icon: "\uD83C\uDFAF", tint: "bg-sun", title: "One clear next step",
+  { icon: "moon", tint: "bg-mint", title: "Prayer tracker",
+    body: "Prayer times for your city, a five-prayer checklist and a full-day streak, right beside your study plan." },
+  { icon: "target", tint: "bg-sun", title: "One clear next step",
     body: "The dashboard always shows what to do next. Tick it off in one tap and move on." },
-  { icon: "\uD83C\uDF45", tint: "bg-sky", title: "Pomodoro focus timer",
-    body: "Work in focused rounds with breaks in between. Link a round to a task and see how many minutes you've put in." },
+  { icon: "timer", tint: "bg-sky", title: "Pomodoro focus timer",
+    body: "Work in focused rounds with breaks in between. Link a round to a task and see your minutes add up." },
 ];
 
 const SOON = [
-  { icon: "\uD83E\uDD16", title: "AI study planner", body: "A plan built around your exam dates, your energy and your prayer times." },
-  { icon: "\uD83D\uDCDD", title: "Notes", body: "Short notes that live next to each subject." },
+  { icon: "sparkle", title: "AI study planner", body: "A plan built around your exam dates, your energy and your prayer times." },
+];
+
+const WHY = [
+  { icon: "book", tint: "bg-pink", problem: "You re-read your notes, then blank in the exam.",
+    fix: "Flashcards make you recall the answer instead of just recognising it. That is exactly what exams ask of you." },
+  { icon: "clock", tint: "bg-sun", problem: "You forget last week's lecture by the weekend.",
+    fix: "Cards you miss come back sooner and cards you know come back later, so each day you review the right things." },
+  { icon: "target", tint: "bg-mint", problem: "Deadlines, notes and revision are scattered everywhere.",
+    fix: "Tasks, notes, a focus timer and your daily prayers live in one calm place, with a clear next step." },
 ];
 
 const STEPS = [
-  { n: "1", tint: "bg-sun", title: "Add what's due", body: "Type the task, pick a subject and a deadline." },
-  { n: "2", tint: "bg-pink", title: "Tick things off", body: "Complete tasks, log your prayers, keep the streak going." },
-  { n: "3", tint: "bg-mint", title: "Watch it add up", body: "Your ring fills, your week lights up, and you can see you're getting somewhere." },
+  { n: "1", tint: "bg-sun", title: "Name a lecture", body: "Give it a title and a colour. You can rename or recolour it any time." },
+  { n: "2", tint: "bg-pink", title: "Add your cards", body: "Let AI draft them from your notes, or write them yourself. Add as many as you like." },
+  { n: "3", tint: "bg-mint", title: "Flip and remember", body: "Rate each card. The ones you miss come back sooner, the ones you know come back later." },
+];
+
+const PATHS = [
+  {
+    id: "auto", icon: "sparkle", tint: "bg-brand", title: "Automatic", sub: "Fastest. AI writes the first draft.",
+    steps: [
+      "Open a lecture and choose Automatic.",
+      "Upload a PDF, PowerPoint or .txt, or paste your notes. Up to 8,000 words at a time.",
+      "Pick how many cards you want and press Make flashcards.",
+      "Look them over, remove any you don't want, then add them to your lecture.",
+    ],
+  },
+  {
+    id: "manual", icon: "pencil", tint: "bg-sun", title: "By yourself", sub: "Full control. Write exactly what you need.",
+    steps: [
+      "Open a lecture and choose By myself.",
+      "Type the question on the front and the answer on the back, then press Add card.",
+      "The form clears so you can keep going. Or paste a whole list, one card per line.",
+      "Edit or delete any card later.",
+    ],
+  },
+];
+
+const DEMO_CARDS = [
+  { q: "What does DHCP do?", a: "Hands out IP addresses to devices automatically." },
+  { q: "Which OSI layer handles routing?", a: "Layer 3, the Network layer (IP)." },
+  { q: "TCP vs UDP?", a: "TCP is reliable and ordered. UDP is faster but makes no delivery guarantee." },
 ];
 
 const FAQ = [
-  { q: "Is it free?", a: "Yes, creating an account is free." },
+  { q: "Is it free?", a: "Yes, creating an account is free. Free accounts can make 3 automatic flashcard sets a month, and writing cards yourself has no monthly limit." },
+  { q: "How long can my notes be?", a: "Up to 8,000 words at a time, pasted or uploaded. For a longer lecture, make cards from one part, then come back for the next." },
+  { q: "What is the difference between notes and flashcards?", a: "Notes are where you write things down. Flashcards are where you test yourself on them. Use notes to capture a lecture, then turn the important parts into cards." },
+  { q: "Can I make flashcards myself?", a: "Yes. Choose By myself in any lecture and write each card, or paste a list with one card per line. You can edit the lecture name, course, colour and every card afterwards." },
   { q: "Why do I get a code by email?", a: "We send a 6-digit code to confirm the address is yours. It takes a few seconds and keeps your account safe." },
   { q: "Where do the prayer times come from?", a: "They come from the Aladhan service, based on your city and the calculation method you pick in the tracker settings. Check them against your local mosque if you like." },
   { q: "Can other people see my tasks?", a: "No. Your tasks and prayer log are only visible to you when you're logged in." },
@@ -92,65 +135,116 @@ function Demo() {
   );
 }
 
-function HeroCard() {
+function FlashcardDemo() {
+  const [i, setI] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const card = DEMO_CARDS[i];
+  function next() {
+    setFlipped(false);
+    setI((i + 1) % DEMO_CARDS.length);
+  }
   return (
-    <div className="relative mx-auto w-full max-w-md lg:max-w-none" aria-hidden="true">
-      <div className="sticker ruled relative rotate-1 p-6 pb-14">
-        <div className="absolute inset-y-0 left-10 w-px bg-pink" />
-        <div className="pl-8">
-          <div className="flex items-center gap-4">
-            <ProgressRing value={68} size={72} stroke={8} />
-            <div>
-              <p className="font-display text-lg font-semibold">Good evening</p>
-              <p className="text-sm text-muted">2 to do &middot; 1 due this week</p>
-            </div>
-          </div>
-          <ul className="mt-5 space-y-3">
-            {[
-              { t: "Lab report", m: "EEE \u00b7 due tomorrow", d: false },
-              { t: "Read chapter 4", m: "CSE \u00b7 due Thursday", d: false },
-              { t: "Quiz revision", m: "Math \u00b7 done", d: true },
-            ].map((x) => (
-              <li key={x.t} className="flex items-start gap-3">
-                <span className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border-2 ${
-                  x.d ? "border-done bg-done" : "border-brand"
-                }`}>
-                  {x.d && (
-                    <svg viewBox="0 0 16 16" className="size-3 text-white">
-                      <path d="M3 8.5l3.2 3.2L13 5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  )}
-                </span>
-                <div>
-                  <p className={`font-bold ${x.d ? "text-muted line-through" : ""}`}>{x.t}</p>
-                  <p className="text-sm text-muted">{x.m}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-5 flex flex-wrap gap-2">
-            {["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"].map((p, i) => (
-              <span key={p} className={`rounded-full border-2 px-3 py-0.5 text-sm font-bold ${
-                i < 3 ? "border-done bg-done text-white" : "border-line"
-              }`}>{p}</span>
-            ))}
-          </div>
-        </div>
+    <div className="relative mx-auto w-full max-w-md lg:max-w-none">
+      <div className="card-tape">
+        <button type="button" onClick={() => setFlipped((f) => !f)}
+          className="sticker index-card relative flex min-h-56 w-full cursor-pointer flex-col items-center justify-center p-6 pb-9 pt-10 text-center">
+          <span className="absolute left-4 top-3 text-xs font-bold uppercase tracking-widest text-muted">{flipped ? "Answer" : "Question"}</span>
+          <span aria-live="polite" className="font-display text-2xl font-semibold leading-snug">{flipped ? card.a : card.q}</span>
+          <span className="absolute bottom-3 text-xs font-bold text-muted">{flipped ? "tap to flip back" : "tap to show answer"}</span>
+        </button>
       </div>
-      <div className="sticker-sm absolute -right-2 -top-5 rotate-6 bg-pink px-3 py-2 font-display text-sm font-bold text-on-sun sm:-right-5">
-        {"\uD83D\uDD25"} 4-day streak
+      <div className="mt-5 flex items-center justify-between gap-3">
+        <span className="text-sm font-bold tabular-nums text-muted">Try it &middot; card {i + 1} of {DEMO_CARDS.length}</span>
+        <button type="button" onClick={next}
+          className="btn rounded-xl bg-mint px-5 py-2 font-display font-semibold text-on-sun">Next card</button>
       </div>
-      <div className="sticker-sm absolute -bottom-6 -left-2 -rotate-3 bg-sun px-4 py-3 text-on-sun sm:-left-5">
-        <p className="text-xs font-bold uppercase tracking-wide opacity-70">Up next</p>
-        <p className="font-display font-semibold">Lab report &middot; due tomorrow</p>
+      <div className="sticker-sm absolute -right-2 -top-6 inline-flex rotate-6 items-center gap-1.5 bg-pink px-3 py-2 font-display text-sm font-bold text-on-sun sm:-right-5" aria-hidden="true">
+        <Icon name="sparkle" className="size-4" /> Made in seconds
       </div>
     </div>
   );
 }
 
+function WhySection() {
+  return (
+    <section id="why" className="mx-auto max-w-6xl px-4 py-24">
+      <h2 className="text-center text-4xl font-bold">Why Reading Partner?</h2>
+      <p className="mx-auto mt-3 max-w-xl text-center text-muted">
+        Built for university students who put in the hours and want it to actually pay off.
+      </p>
+      <div className="mt-12 grid gap-6 md:grid-cols-3">
+        {WHY.map((w) => (
+          <article key={w.problem} className="sticker bg-surface p-6">
+            <div className={`grid size-12 place-items-center rounded-xl border-2 border-edge text-on-sun ${w.tint}`} aria-hidden="true">
+              <Icon name={w.icon} className="size-6" />
+            </div>
+            <h3 className="mt-4 text-xl font-semibold leading-snug">{w.problem}</h3>
+            <p className="mt-2 text-muted">{w.fix}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function HowToFlashcards({ token }) {
+  return (
+    <section id="flashcards" className="border-y-2 border-edge bg-surface">
+      <div className="mx-auto max-w-6xl px-4 py-24">
+        <h2 className="text-center text-4xl font-bold">How to make flashcards</h2>
+        <p className="mx-auto mt-3 max-w-xl text-center text-muted">
+          Three steps. Pick the automatic way or the by-yourself way for each lecture, and mix them whenever you like.
+        </p>
+
+        <ol className="mt-12 grid gap-8 md:grid-cols-3">
+          {STEPS.map((st) => (
+            <li key={st.n} className="text-center">
+              <span className={`sticker-sm mx-auto grid size-14 place-items-center font-display text-2xl font-bold text-on-sun ${st.tint}`}>
+                {st.n}
+              </span>
+              <h3 className="mt-4 text-xl font-semibold">{st.title}</h3>
+              <p className="mx-auto mt-2 max-w-xs text-muted">{st.body}</p>
+            </li>
+          ))}
+        </ol>
+
+        <h3 className="mt-16 text-center text-2xl font-semibold">Two ways to add cards</h3>
+        <div className="mt-8 grid gap-6 md:grid-cols-2">
+          {PATHS.map((p) => (
+            <article key={p.id} className="sticker bg-paper p-6">
+              <div className="flex items-center gap-3">
+                <span className={`grid size-12 place-items-center rounded-xl border-2 border-edge text-on-sun ${p.tint}`} aria-hidden="true"><Icon name={p.icon} className="size-6" /></span>
+                <div>
+                  <h4 className="font-display text-xl font-semibold">{p.title}</h4>
+                  <p className="text-sm text-muted">{p.sub}</p>
+                </div>
+              </div>
+              <ol className="mt-5 space-y-3">
+                {p.steps.map((t, n) => (
+                  <li key={t} className="flex gap-3">
+                    <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full border-2 border-edge bg-surface text-xs font-bold">{n + 1}</span>
+                    <span>{t}</span>
+                  </li>
+                ))}
+              </ol>
+            </article>
+          ))}
+        </div>
+
+        <div className="mt-10 text-center">
+          <Link to={token ? "/flashcards" : "/signup"}
+            className="btn inline-block rounded-xl bg-brand px-6 py-3 font-display text-lg font-semibold text-on-sun">
+            {token ? "Go to my flashcards" : "Make my first flashcards"}
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function Home() {
   const { token } = useAuth();
-  const cta = "btn inline-block rounded-xl bg-brand px-6 py-3 font-display text-lg font-semibold text-white";
+  const cta = "btn inline-block rounded-xl bg-brand px-6 py-3 font-display text-lg font-semibold text-on-sun";
   const navLink = "hidden rounded-full px-3 py-1.5 text-sm font-bold text-muted hover:bg-surface hover:text-ink md:inline-block";
 
   return (
@@ -159,19 +253,20 @@ export default function Home() {
         <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-3">
           <LogoLink className="mr-4" />
           <nav className="flex flex-1 items-center gap-1" aria-label="Sections">
+            <a href="#why" className={navLink}>Why</a>
+            <a href="#flashcards" className={navLink}>Flashcards</a>
             <a href="#features" className={navLink}>Features</a>
-            <a href="#how" className={navLink}>How it works</a>
             <a href="#try" className={navLink}>Try it</a>
             <a href="#faq" className={navLink}>FAQ</a>
           </nav>
           <div className="flex items-center gap-2 text-sm">
             <ThemeToggle />
             {token ? (
-              <Link to="/dashboard" className="btn whitespace-nowrap rounded-xl bg-brand px-4 py-2 font-bold text-white">Open dashboard</Link>
+              <Link to="/dashboard" className="btn whitespace-nowrap rounded-xl bg-brand px-4 py-2 font-bold text-on-sun">Open dashboard</Link>
             ) : (
               <>
                 <Link to="/login" className="hidden px-2 py-2 font-bold hover:underline sm:inline">Log in</Link>
-                <Link to="/signup" className="btn whitespace-nowrap rounded-xl bg-brand px-4 py-2 font-bold text-white">Get started</Link>
+                <Link to="/signup" className="btn whitespace-nowrap rounded-xl bg-brand px-4 py-2 font-bold text-on-sun">Get started</Link>
               </>
             )}
           </div>
@@ -182,18 +277,19 @@ export default function Home() {
         <section className="mx-auto grid max-w-6xl items-center gap-14 px-4 pb-24 pt-14 lg:grid-cols-[1.1fr_1fr]">
           <div>
             <p className="sticker-sm inline-block -rotate-2 bg-pink px-3 py-1 font-display text-sm font-bold text-on-sun">
-              For students with a lot going on
+              Study smarter, not longer
             </p>
             <h1 className="mt-5 text-5xl font-bold leading-[1.08] sm:text-6xl">
-              Make studying feel like <span className="highlight">progress</span>.
+              Turn any lecture into <span className="highlight">flashcards</span>.
             </h1>
             <p className="mt-6 max-w-lg text-lg text-muted">
-              Track assignments, build streaks and keep your daily prayers on the same page. Small wins, every single day.
+              Re-reading your notes feels productive but rarely sticks. Testing yourself does. Reading Partner turns your slides and notes into flashcards in seconds, then shows you what to review today.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
-              <Link to={token ? "/dashboard" : "/signup"} className={cta}>
-                {token ? "Open dashboard" : "Start for free"}
+              <Link to={token ? "/flashcards" : "/signup"} className={cta}>
+                {token ? "Open my flashcards" : "Make my first flashcards"}
               </Link>
+              <a href="#flashcards" className="font-bold underline underline-offset-4 hover:text-brand-ink">See how it works</a>
               {!token && (
                 <Link to="/login" className="font-bold underline underline-offset-4 hover:text-brand-ink">
                   I already have an account
@@ -201,69 +297,56 @@ export default function Home() {
               )}
             </div>
             <ul className="mt-8 flex flex-wrap gap-2 text-sm font-bold">
-              {["Free to start", "Phone and laptop friendly", "Light and dark themes"].map((t) => (
+              {["Up to 8,000 words per lecture", "Automatic or by hand", "Calm colours, easy on the eyes"].map((t) => (
                 <li key={t} className="rounded-full border-2 border-line bg-surface px-3 py-1">{t}</li>
               ))}
             </ul>
           </div>
-          <HeroCard />
+          <FlashcardDemo />
         </section>
 
-        <div className="overflow-hidden border-y-2 border-edge bg-brand py-3 text-white" aria-hidden="true">
+        <div className="overflow-hidden border-y-2 border-edge bg-brand py-3 text-on-sun" aria-hidden="true">
           <div className="marquee flex w-max gap-8 font-display text-xl font-semibold">
             {[...WORDS, ...WORDS].map((w, i) => (
               <span key={i} className="flex items-center gap-8 whitespace-nowrap">
-                {w}<span className="text-sun">{"\u2726"}</span>
+                {w}<span className="size-1.5 rounded-full bg-on-sun/40" />
               </span>
             ))}
           </div>
         </div>
 
+        <WhySection />
+
+        <HowToFlashcards token={token} />
+
         <section id="features" className="mx-auto max-w-6xl px-4 py-24">
-          <h2 className="text-center text-4xl font-bold">Everything for your study day</h2>
+          <h2 className="text-center text-4xl font-bold">And everything else for your study day</h2>
           <p className="mx-auto mt-3 max-w-xl text-center text-muted">
             No clutter, no setup maze. Just the things that help you get through the week.
           </p>
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {FEATURES.map((f) => (
-              <article key={f.title} className="sticker bg-surface p-6 transition-transform hover:-translate-y-1">
-                <div className={`grid size-12 place-items-center rounded-xl border-2 border-edge text-2xl ${f.tint}`} aria-hidden="true">
-                  {f.icon}
+              <article key={f.title} className="sticker bg-surface p-5 transition-transform hover:-translate-y-1">
+                <div className={`grid size-12 place-items-center rounded-xl border-2 border-edge text-on-sun ${f.tint}`} aria-hidden="true">
+                  <Icon name={f.icon} className="size-6" />
                 </div>
-                <h3 className="mt-4 text-xl font-semibold">{f.title}</h3>
-                <p className="mt-2 text-muted">{f.body}</p>
+                <h3 className="mt-4 text-lg font-semibold">{f.title}</h3>
+                <p className="mt-2 text-sm text-muted">{f.body}</p>
               </article>
             ))}
           </div>
 
           <h3 className="mt-20 text-center text-2xl font-semibold">Coming soon</h3>
-          <div className="mx-auto mt-6 grid max-w-3xl gap-4 sm:grid-cols-2">
+          <div className="mx-auto mt-6 grid max-w-md gap-4">
             {SOON.map((s) => (
               <div key={s.title} className="rounded-2xl border-2 border-dashed border-edge p-5">
                 <p className="flex items-center gap-2 font-display text-lg font-semibold">
-                  <span aria-hidden="true">{s.icon}</span> {s.title}
+                  <Icon name={s.icon} className="size-5" /> {s.title}
                   <span className="ml-auto rounded-full bg-sun px-2 py-0.5 text-xs font-bold text-on-sun">Soon</span>
                 </p>
                 <p className="mt-1 text-sm text-muted">{s.body}</p>
               </div>
             ))}
-          </div>
-        </section>
-
-        <section id="how" className="border-y-2 border-edge bg-surface">
-          <div className="mx-auto max-w-6xl px-4 py-24">
-            <h2 className="text-center text-4xl font-bold">How it works</h2>
-            <ol className="mt-12 grid gap-8 md:grid-cols-3">
-              {STEPS.map((s) => (
-                <li key={s.n} className="text-center">
-                  <span className={`sticker-sm mx-auto grid size-14 place-items-center font-display text-2xl font-bold text-on-sun ${s.tint}`}>
-                    {s.n}
-                  </span>
-                  <h3 className="mt-4 text-xl font-semibold">{s.title}</h3>
-                  <p className="mx-auto mt-2 max-w-xs text-muted">{s.body}</p>
-                </li>
-              ))}
-            </ol>
           </div>
         </section>
 
@@ -297,9 +380,9 @@ export default function Home() {
 
         {!token && (
           <section className="border-y-2 border-edge bg-brand">
-            <div className="mx-auto max-w-3xl px-4 py-20 text-center text-white">
+            <div className="mx-auto max-w-3xl px-4 py-20 text-center text-on-sun">
               <h2 className="text-4xl font-bold">Ready to feel on top of things?</h2>
-              <p className="mt-3 text-lg text-white/85">Set up takes about a minute.</p>
+              <p className="mt-3 text-lg text-on-sun/80">Set up takes about a minute.</p>
               <Link to="/signup"
                 className="btn mt-8 inline-block rounded-xl bg-sun px-7 py-3 font-display text-lg font-semibold text-on-sun">
                 Create my account
@@ -313,7 +396,7 @@ export default function Home() {
         <LogoLink className="text-ink" />
         <nav className="flex gap-4 font-bold" aria-label="Footer">
           <a href="#features" className="hover:text-ink">Features</a>
-          <a href="#how" className="hover:text-ink">How it works</a>
+          <a href="#flashcards" className="hover:text-ink">Flashcards</a>
           <a href="#faq" className="hover:text-ink">FAQ</a>
           <Link to="/login" className="hover:text-ink">Log in</Link>
         </nav>

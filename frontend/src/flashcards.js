@@ -23,6 +23,24 @@ export const DECK_COLORS = {
   mint: { label: "Mint", emoji: "\uD83C\uDF40", bg: "bg-mint" },
 };
 
+// One source (pasted or uploaded) can be at most this many words. Keep in sync with backend/billing_config.py.
+export const MAX_WORDS = 8000;
+
+export function countWords(text) {
+  const t = text.trim();
+  return t ? t.split(/\s+/).length : 0;
+}
+
+export function trimToWords(text, max) {
+  const re = /\S+/g;
+  let m;
+  let n = 0;
+  while ((m = re.exec(text))) {
+    if (++n === max) return text.slice(0, m.index + m[0].length);
+  }
+  return text;
+}
+
 export const isDue = (card) => new Date(card.due_at) <= new Date();
 
 export function shuffle(list) {
@@ -70,6 +88,14 @@ export function useCreateDeck() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body) => api.post("/flashcards/decks", body).then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["decks"] }),
+  });
+}
+
+export function useUpdateDeck() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...body }) => api.patch(`/flashcards/decks/${id}`, body).then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["decks"] }),
   });
 }

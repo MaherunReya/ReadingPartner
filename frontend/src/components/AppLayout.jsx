@@ -3,15 +3,17 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "../api";
 import { FocusProvider, MODES, formatClock, useFocus } from "../focusTimer";
 import { useAuth } from "../auth";
+import Icon from "./Icon";
 import LogoLink from "./LogoLink";
 import ThemeToggle from "./ThemeToggle";
 
 const LINKS = [
   { to: "/dashboard", label: "Dashboard" },
   { to: "/flashcards", label: "Flashcards" },
+  { to: "/notes", label: "Notes" },
   { to: "/focus", label: "Focus" },
   { to: "/prayers", label: "Prayers" },
-  { to: "/billing", label: "Billing" },
+  // { to: "/billing", label: "Billing" },
 ];
 
 function TimerChip() {
@@ -19,9 +21,9 @@ function TimerChip() {
   const { pathname } = useLocation();
   if (timer.status === "idle" || pathname === "/focus") return null;
   return (
-    <Link to="/focus" className="sticker-sm bg-sun px-3 py-1 text-sm font-bold tabular-nums text-on-sun"
+    <Link to="/focus" className="sticker-sm inline-flex items-center gap-1.5 bg-sun px-3 py-1 text-sm font-bold tabular-nums text-on-sun"
       aria-label={`${MODES[timer.mode].label} timer: ${formatClock(remainingMs)} left`}>
-      <span aria-hidden="true">{"\uD83C\uDF45"}</span> {formatClock(remainingMs)}
+      <Icon name="timer" className="size-4" /> {formatClock(remainingMs)}
     </Link>
   );
 }

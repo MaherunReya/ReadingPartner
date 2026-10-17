@@ -1,4 +1,5 @@
 import { MOODS } from "../mood";
+import MoodFace from "./MoodFace";
 
 export default function MoodPicker({ value, onChange, disabled = false }) {
   return (
@@ -12,14 +13,14 @@ export default function MoodPicker({ value, onChange, disabled = false }) {
             aria-checked={active}
             disabled={disabled}
             onClick={() => onChange(m.value)}
-            className={`group flex flex-1 flex-col items-center gap-1 rounded-2xl border-2 px-1 py-3 transition-all active:scale-95 disabled:opacity-60 ${
+            className={`group flex flex-1 flex-col items-center gap-2 rounded-2xl border-2 px-1 py-4 transition-all active:scale-95 disabled:opacity-60 ${
               active
-                ? "-translate-y-0.5 border-edge bg-sun text-on-sun shadow-[3px_3px_0_0_var(--color-edge)]"
-                : "border-line hover:border-brand"
+                ? "border-edge bg-surface shadow-[3px_3px_0_0_var(--color-edge)]"
+                : "border-line hover:border-edge"
             }`}
           >
-            <span className="text-3xl transition-transform group-hover:scale-110 sm:text-4xl" aria-hidden="true">{m.emoji}</span>
-            <span className="text-xs font-bold">{m.label}</span>
+            <MoodFace value={m.value} size={56} className="size-10 transition-transform group-hover:scale-105 sm:size-14" />
+            <span className="text-xs font-bold sm:text-sm">{m.label}</span>
           </button>
         );
       })}

@@ -10,6 +10,7 @@ import ThemeToggle from "./ThemeToggle";
 const LINKS = [
   { to: "/dashboard", label: "Dashboard" },
   { to: "/flashcards", label: "Flashcards" },
+  { to: "/mood", label: "Mood" },
   { to: "/notes", label: "Notes" },
   { to: "/focus", label: "Focus" },
   { to: "/prayers", label: "Prayers" },

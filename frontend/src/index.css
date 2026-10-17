@@ -166,10 +166,7 @@ textarea:focus {
   background-size: 18px 18px;
 }
 
-.tomato-body { transform-origin: 50px 90px; }
-.tomato-run .tomato-body { animation: tomato-bounce 1.1s ease-in-out infinite; }
-.tomato-run .tomato-shadow { animation: tomato-shadow 1.1s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
-.tomato-eye { transform-box: fill-box; transform-origin: center; animation: tomato-blink 4s infinite; }
+
 @keyframes tomato-bounce {
   0%, 100% { transform: translateY(0) scale(1.05, 0.95); }
   50% { transform: translateY(-9px) scale(0.97, 1.03); }
@@ -195,25 +192,6 @@ textarea:focus {
   to { opacity: 1; transform: translateY(0) scale(1) rotate(var(--tilt)); }
 }
 
-/* Pomodoro tomato extras */
-.tomato-leaf { transform-box: fill-box; transform-origin: 50% 100%; }
-.tomato-run .tomato-leaf { animation: leaf-sway 1.6s ease-in-out infinite; }
-.tomato-sparkle { transform-box: fill-box; transform-origin: center; animation: sparkle 1.6s ease-in-out infinite; }
-.tomato-zzz { animation: zzz-float 2.4s ease-in-out infinite; }
-@keyframes leaf-sway { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
-@keyframes sparkle { 0%, 100% { transform: scale(0.2) rotate(0deg); opacity: 0; } 50% { transform: scale(1) rotate(45deg); opacity: 1; } }
-@keyframes zzz-float { 0%, 100% { transform: translateY(2px); opacity: 0.5; } 50% { transform: translateY(-4px); opacity: 1; } }
-.timer-glow { background: radial-gradient(circle at center, rgba(244, 169, 160, 0.14) 0%, rgba(246, 235, 191, 0.10) 45%, transparent 68%); }
-
-/* Focus page extras */
-.timer-glow {
-  position: absolute; inset: -6px; border-radius: 9999px; pointer-events: none; filter: blur(16px);
-  background: radial-gradient(circle, transparent 52%, rgba(244, 169, 160, 0.30) 62%, rgba(246, 235, 191, 0.14) 76%, transparent 88%);
-  transition: background 0.4s;
-}
-.timer-glow[data-mode="short"] { background: radial-gradient(circle, transparent 52%, rgba(174, 227, 207, 0.35) 62%, rgba(181, 223, 240, 0.16) 76%, transparent 88%); }
-.timer-glow[data-mode="long"] { background: radial-gradient(circle, transparent 52%, rgba(181, 223, 240, 0.35) 62%, rgba(191, 181, 242, 0.20) 76%, transparent 88%); }
-.float-bit { position: absolute; font-size: 1.75rem; pointer-events: none; animation: bob 3.2s ease-in-out infinite; }
 @keyframes bob { 0%, 100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-10px) rotate(6deg); } }
 .pulse-glow { animation: pulse-glow 1.8s ease-in-out infinite; }
 @keyframes pulse-glow {

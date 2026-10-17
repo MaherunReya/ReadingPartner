@@ -1,7 +1,9 @@
-import { moodInfo } from "../mood";
+import { moodColor, moodInfo, useMoodPalette } from "../mood";
+import MoodFace from "./MoodFace";
 
 // One bar per day: taller and more colorful for better moods. Days without a check-in are a small stub.
 export default function MoodChart({ days }) {
+  const [palette] = useMoodPalette();
   const logged = days.filter((d) => d.entry);
   return (
     <div>
@@ -14,7 +16,7 @@ export default function MoodChart({ days }) {
               title={m ? `${d.label}: ${m.label}` : `${d.label}: no check-in`}>
               {m ? (
                 <div className="w-full rounded-t-md border-2 border-b-0 border-edge transition-all duration-500"
-                  style={{ height: `${d.entry.mood * 20}%`, background: m.color }} />
+                  style={{ height: `${d.entry.mood * 20}%`, background: moodColor(d.entry.mood, palette) }} />
               ) : (
                 <div className="h-1.5 w-full rounded-full bg-line" />
               )}
@@ -31,8 +33,8 @@ export default function MoodChart({ days }) {
           const m = moodInfo(v);
           return (
             <li key={v} className="flex items-center gap-1.5">
-              <span className="size-3 rounded-sm border-2 border-edge" style={{ background: m.color }} />
-              {m.emoji} {m.label}
+              <MoodFace value={v} size={18} />
+              {m.label}
             </li>
           );
         })}

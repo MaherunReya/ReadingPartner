@@ -5,36 +5,18 @@ import { useSearchParams } from "react-router-dom";
 import api from "../api";
 import Card from "../components/Card";
 import TimerRing from "../components/TimerRing";
-import TimerTomato from "../components/TimerTomato";
 import WeekChart from "../components/WeekChart";
 import { lastNDays, toISODate } from "../dates";
 import { MODES, formatClock, useFocus, useFocusSessions } from "../focusTimer";
 
 const MODE_ICON = { focus: "timer", short: "coffee", long: "moon" };
 
-// Each mode gets its own colours so switching feels like changing scenery.
-const MODE_THEME = {
-  focus: { tab: "bg-[#f4b5ac] text-on-sun", ring: ["#f1a99f", "#f5c8a0", "#f1e2a6"] },
-  short: { tab: "bg-mint text-on-sun", ring: ["#a9dcc8", "#b5dff0"] },
-  long: { tab: "bg-sky text-on-sun", ring: ["#b5dff0", "#a89df0"] },
-};
+// One calm ring colour for work, another for breaks.
+const MODE_COLOR = { focus: "var(--color-brand-dark)", short: "var(--color-done)", long: "var(--color-done)" };
 
-function MiniTomato({ filled }) {
+function RoundDots({ filled }) {
   return (
-    <svg viewBox="0 0 40 40" width="30" height="30" aria-hidden="true" className={filled ? "mini-tomato-pop" : ""}>
-      {filled ? (
-        <>
-          <ellipse cx="20" cy="23" rx="15" ry="13" fill="#e8847a" stroke="var(--color-edge)" strokeWidth="2.5" />
-          <ellipse cx="14" cy="18" rx="4" ry="2.2" fill="#fff" opacity="0.45" transform="rotate(-30 14 18)" />
-          <path d="M20 11 C16 5 11 6 9 9 C13 9 16 11 18 13 Z M20 11 C24 5 29 6 31 9 C27 9 24 11 22 13 Z" fill="#8cc79a" stroke="var(--color-edge)" strokeWidth="2" strokeLinejoin="round" />
-        </>
-      ) : (
-        <>
-          <ellipse cx="20" cy="23" rx="15" ry="13" fill="var(--color-line)" stroke="var(--color-edge)" strokeWidth="2.5" opacity="0.7" />
-          <path d="M20 11 C16 5 11 6 9 9 C13 9 16 11 18 13 Z M20 11 C24 5 29 6 31 9 C27 9 24 11 22 13 Z" fill="var(--color-line)" stroke="var(--color-edge)" strokeWidth="2" strokeLinejoin="round" opacity="0.7" />
-        </>
-      )}
-    </svg>
+    <span className={`size-3.5 rounded-full border-2 border-edge transition-colors ${filled ? "bg-brand-dark" : "bg-line"}`} />
   );
 }
 
@@ -43,8 +25,8 @@ function TaskChip({ selected, onClick, children, title }) {
     <button type="button" role="radio" aria-checked={selected} onClick={onClick} title={title}
       className={`max-w-[16rem] truncate rounded-full border-2 px-3.5 py-1.5 text-sm font-bold transition-all duration-150 ${
         selected
-          ? "-translate-y-0.5 border-edge bg-sun text-on-sun shadow-[2px_2px_0_var(--color-edge)]"
-          : "border-line bg-surface text-ink hover:-translate-y-0.5 hover:border-brand"
+          ? "border-edge bg-brand text-on-sun"
+          : "border-line bg-surface text-ink hover:border-edge"
       }`}>
       {children}
     </button>
@@ -141,10 +123,10 @@ export default function FocusPage() {
   const progress = f.totalMs ? 1 - f.remainingMs / f.totalMs : 0;
   const running_ = timer.status === "running";
   const statusLabel = timer.status === "paused"
-    ? "Napping... tap Resume"
+    ? "Paused"
     : timer.mode === "focus"
-      ? (running_ ? "Locked in" : "Ready to focus?")
-      : (running_ ? "Break time, relax" : "Take a break?");
+      ? (running_ ? "Focusing" : "Ready to focus")
+      : (running_ ? "On a break" : "Ready for a break");
   const hours = Math.floor(stats.todayMinutes / 60);
   const mins = stats.todayMinutes % 60;
 
@@ -164,12 +146,12 @@ export default function FocusPage() {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
         <Card>
-          <div role="tablist" aria-label="Timer mode" className="mx-auto flex w-fit gap-1 rounded-xl border-2 border-edge bg-surface p-1">
+          <div role="tablist" aria-label="Timer mode" className="mx-auto flex w-fit gap-2">
             {Object.entries(MODES).map(([id, m]) => (
               <button key={id} role="tab" aria-selected={timer.mode === id} disabled={running}
                 onClick={() => f.setMode(id)}
-                className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-bold transition-colors disabled:cursor-not-allowed ${
-                  timer.mode === id ? MODE_THEME[id].tab : "text-muted hover:text-ink disabled:opacity-50"
+                className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-bold transition-colors disabled:cursor-not-allowed ${
+                  timer.mode === id ? "bg-brand text-on-sun" : "text-muted hover:bg-line/60 disabled:opacity-50"
                 }`}>
                 <Icon name={MODE_ICON[id]} className="size-4" /> {m.label}
               </button>
@@ -177,13 +159,11 @@ export default function FocusPage() {
           </div>
 
           <div className="relative mx-auto mt-6 w-fit max-w-full">
-            <div className="timer-glow" data-mode={timer.mode} aria-hidden="true" />
-            <TimerRing progress={progress} color={MODE_THEME[timer.mode].ring[0]} gradient={MODE_THEME[timer.mode].ring} fill="var(--color-surface)" size={260} stroke={14}>
-              <TimerTomato progress={progress} status={timer.status} mode={timer.mode} size={116} />
-              <span className="font-display text-4xl font-bold tabular-nums" role="timer" aria-live="off">
+            <TimerRing progress={progress} color={MODE_COLOR[timer.mode]} size={260} stroke={14}>
+              <span className="font-display text-6xl font-bold tabular-nums" role="timer" aria-live="off">
                 {formatClock(f.remainingMs)}
               </span>
-              <span className="mt-1 text-sm font-bold text-muted">
+              <span className="mt-2 text-sm font-bold text-muted">
                 {statusLabel}
               </span>
             </TimerRing>
@@ -195,7 +175,7 @@ export default function FocusPage() {
                 <Icon name="pause" className="size-5" /> Pause
               </button>
             ) : (
-              <button onClick={f.start} className={`btn inline-flex items-center gap-2 rounded-2xl bg-brand px-8 py-3 font-display text-lg font-semibold text-on-sun ${idle ? "pulse-glow" : ""}`}>
+              <button onClick={f.start} className="btn inline-flex items-center gap-2 rounded-xl bg-brand px-8 py-3 font-display text-lg font-semibold text-on-sun">
                 <Icon name="play" filled className="size-5" /> {timer.status === "paused" ? "Resume" : "Start"}
               </button>
             )}
@@ -207,14 +187,12 @@ export default function FocusPage() {
             </button>
           </div>
 
-          <div className="mt-4 flex items-center justify-center gap-1.5" role="img" aria-label={`${filled} of 4 rounds before a long break`}>
-            {[0, 1, 2, 3].map((i) => (
-              <MiniTomato key={`${i}-${i < filled}`} filled={i < filled} />
-            ))}
+          <div className="mt-5 flex items-center justify-center gap-2" role="img" aria-label={`${filled} of 4 rounds before a long break`}>
+            {[0, 1, 2, 3].map((i) => <RoundDots key={i} filled={i < filled} />)}
           </div>
 
           <div className="mx-auto mt-6 max-w-md">
-            <div className="card-tape sticker-sm -rotate-1 bg-sun px-4 pb-3 pt-4 text-on-sun">
+            <div className="sticker-sm bg-sun px-4 py-3 text-on-sun">
               <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider opacity-70"><Icon name="pin" className="size-3.5" /> Now working on</p>
               <p className="mt-0.5 break-words font-display text-lg font-bold leading-snug">
                 {timer.taskId ? (taskTitle(timer.taskId) ?? "Selected task") : "Just focusing"}
@@ -235,11 +213,11 @@ export default function FocusPage() {
 
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-3">
-            <div className="sticker-sm -rotate-1 bg-surface px-4 py-3 transition-transform hover:rotate-0 hover:-translate-y-1">
+            <div className="sticker-sm bg-surface px-4 py-3">
               <p className="flex items-center gap-1.5 text-sm text-muted"><Icon name="clock" className="size-4" /> Focused today</p>
               <p className="font-display text-2xl font-bold">{hours ? `${hours}h ${mins}m` : `${mins}m`}</p>
             </div>
-            <div className="sticker-sm rotate-1 bg-surface px-4 py-3 transition-transform hover:rotate-0 hover:-translate-y-1">
+            <div className="sticker-sm bg-surface px-4 py-3">
               <p className="flex items-center gap-1.5 text-sm text-muted"><Icon name="timer" className="size-4" /> Rounds today</p>
               <p className="font-display text-2xl font-bold">{stats.today.length}</p>
             </div>

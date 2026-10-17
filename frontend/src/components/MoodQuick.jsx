@@ -3,6 +3,7 @@ import Card from "./Card";
 import MoodPicker from "./MoodPicker";
 import { toISODate } from "../dates";
 import { moodInfo, tagLabel, useMoodEntries, useSaveMood } from "../mood";
+import MoodFace from "./MoodFace";
 
 // Dashboard card: one tap to check in, details live on the Mood page.
 export default function MoodQuick() {
@@ -18,7 +19,7 @@ export default function MoodQuick() {
     return (
       <Card title="Daily check-in" action={<Link to="/mood" className="text-sm font-bold text-brand-ink underline">Change or add details</Link>}>
         <div className="flex items-center gap-4">
-          <span className="text-5xl" aria-hidden="true">{m.emoji}</span>
+          <MoodFace value={m.value} size={56} />
           <div>
             <p className="font-display text-xl font-semibold">Feeling {m.label.toLowerCase()} today</p>
             <p className="text-sm text-muted">

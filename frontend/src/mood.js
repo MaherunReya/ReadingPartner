@@ -1,15 +1,46 @@
-import { useMemo } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "./api";
 import { addDays, toISODate } from "./dates";
 
 export const MOODS = [
-  { value: 1, label: "Rough", emoji: "\uD83D\uDE23", color: "var(--color-overdue)" },
-  { value: 2, label: "Meh", emoji: "\uD83D\uDE15", color: "var(--color-pink)" },
-  { value: 3, label: "Okay", emoji: "\uD83D\uDE10", color: "var(--color-sun)" },
-  { value: 4, label: "Good", emoji: "\uD83D\uDE42", color: "var(--color-sky)" },
-  { value: 5, label: "Great", emoji: "\uD83D\uDE04", color: "var(--color-mint)" },
+  { value: 1, label: "Rough", color: "color-mix(in srgb, var(--color-pink) 70%, var(--color-overdue))" },
+  { value: 2, label: "Meh", color: "var(--color-pink)" },
+  { value: 3, label: "Okay", color: "var(--color-sun)" },
+  { value: 4, label: "Good", color: "var(--color-sky)" },
+  { value: 5, label: "Great", color: "var(--color-mint)" },
 ];
+
+export const MOOD_PALETTES = {
+  mixed: { label: "Mixed" },
+  mint: { label: "Mint", color: "var(--color-mint)" },
+  pink: { label: "Rose", color: "var(--color-pink)" },
+  sun: { label: "Sand", color: "var(--color-sun)" },
+  sky: { label: "Sky", color: "var(--color-sky)" },
+};
+
+const PALETTE_KEY = "studyguide_mood_palette";
+const listeners = new Set();
+const readPalette = () => {
+  try {
+    const v = localStorage.getItem(PALETTE_KEY);
+    return v && MOOD_PALETTES[v] ? v : "mixed";
+  } catch {
+    return "mixed";
+  }
+};
+
+export function useMoodPalette() {
+  const palette = useSyncExternalStore((cb) => { listeners.add(cb); return () => listeners.delete(cb); }, readPalette);
+  const setPalette = (id) => {
+    try { localStorage.setItem(PALETTE_KEY, id); } catch { /* private mode */ }
+    listeners.forEach((l) => l());
+  };
+  return [palette, setPalette];
+}
+
+export const moodColor = (value, palette = "mixed") =>
+  MOOD_PALETTES[palette]?.color ?? (MOODS.find((m) => m.value === value) ?? MOODS[2]).color;
 
 export const TAGS = [
   { id: "energized", label: "Energized" },

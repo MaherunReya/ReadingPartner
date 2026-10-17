@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Card from "../components/Card";
 import MoodChart from "../components/MoodChart";
+import MoodFace from "../components/MoodFace";
+import MoodPalettePicker from "../components/MoodPalettePicker";
 import MoodPicker from "../components/MoodPicker";
 import { addDays, lastNDays, toISODate } from "../dates";
 import { useFocus } from "../focusTimer";
@@ -18,22 +20,36 @@ export default function MoodPage() {
   const [tags, setTags] = useState([]);
   const [note, setNote] = useState("");
   const [saved, setSaved] = useState(false);
+  const [noteError, setNoteError] = useState("");
   const [applied, setApplied] = useState(false);
 
-  // Fill the form with today's saved check-in once it loads
+  // The "Saved" message fades after a few seconds instead of staying forever
+  useEffect(() => {
+    if (!saved) return;
+    const t = setTimeout(() => setSaved(false), 3000);
+    return () => clearTimeout(t);
+  }, [saved]);
+
+  // Fill the mood and tags with today's saved check-in. The note box always starts empty.
   useEffect(() => {
     if (entry) {
       setMood(entry.mood);
       setTags(entry.tags);
-      setNote(entry.note ?? "");
     }
-  }, [entry?.mood, entry?.note, entry?.tags?.join(",")]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [entry?.mood, entry?.tags?.join(",")]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function submit(e) {
     e.preventDefault();
     if (!mood) return;
+    // Anything you type is added under today's earlier note, and an empty box keeps it as it is.
+    const combined = [entry?.note, note.trim()].filter(Boolean).join("\n") || null;
+    if (combined && combined.length > 500) {
+      setNoteError("Today's note would go over 500 characters. Shorten what you wrote.");
+      return;
+    }
+    setNoteError("");
     setSaved(false);
-    save.mutate({ date: today, mood, tags, note: note.trim() || null }, { onSuccess: () => setSaved(true) });
+    save.mutate({ date: today, mood, tags, note: combined }, { onSuccess: () => { setSaved(true); setNote(""); } });
   }
 
   const toggleTag = (id) => setTags((t) => (t.includes(id) ? t.filter((x) => x !== id) : [...t, id]));
@@ -69,6 +85,7 @@ export default function MoodPage() {
         <Card title="How are you feeling today?">
           <form onSubmit={submit} className="space-y-5">
             <MoodPicker value={mood} onChange={(v) => { setMood(v); setSaved(false); }} />
+            <MoodPalettePicker />
 
             <fieldset>
               <legend className="text-sm font-bold text-muted">Anything describe it? (optional)</legend>
@@ -77,7 +94,7 @@ export default function MoodPage() {
                   <button key={t.id} type="button" aria-pressed={tags.includes(t.id)}
                     onClick={() => { toggleTag(t.id); setSaved(false); }}
                     className={`rounded-full border-2 px-3 py-1 text-sm font-bold transition-colors ${
-                      tags.includes(t.id) ? "border-edge bg-brand text-white" : "border-line hover:border-brand"
+                      tags.includes(t.id) ? "border-edge bg-brand text-on-sun" : "border-line hover:border-brand"
                     }`}>
                     {t.label}
                   </button>
@@ -88,17 +105,21 @@ export default function MoodPage() {
             <div>
               <label htmlFor="mood-note" className="text-sm font-bold text-muted">A note to yourself (optional)</label>
               <textarea id="mood-note" rows={3} maxLength={500} value={note}
-                onChange={(e) => { setNote(e.target.value); setSaved(false); }}
-                placeholder="What's on your mind today?"
+                onChange={(e) => { setNote(e.target.value); setSaved(false); setNoteError(""); }}
+                placeholder={entry?.note ? "Add another note for today..." : "What's on your mind today?"}
                 className="mt-1 w-full resize-y border border-line bg-surface px-3 py-2" />
+              {entry?.note && (
+                <p className="mt-1 text-xs text-muted">Today's saved note is under Recent check-ins. New text is added to it.</p>
+              )}
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
               <button type="submit" disabled={!mood || save.isPending}
-                className="btn rounded-xl bg-brand px-6 py-2.5 font-display text-lg font-semibold text-white disabled:opacity-50">
+                className="btn rounded-xl bg-brand px-6 py-2.5 font-display text-lg font-semibold text-on-sun disabled:opacity-50">
                 {entry ? "Update check-in" : "Save check-in"}
               </button>
               {saved && <span role="status" className="text-sm font-bold text-done">Saved. Nice one.</span>}
+              {noteError && <span role="alert" className="text-sm text-overdue">{noteError}</span>}
               {save.isError && <span role="alert" className="text-sm text-overdue">Couldn't save. Try again.</span>}
             </div>
           </form>
@@ -111,7 +132,7 @@ export default function MoodPage() {
               <p className="mt-1">{suggestion(todayMood)}</p>
               {todayMood <= 2 && (
                 <button onClick={() => { updateSettings({ focus: 15 }); setApplied(true); }}
-                  className="btn mt-4 rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white">
+                  className="btn mt-4 rounded-xl bg-brand px-4 py-2 text-sm font-bold text-on-sun">
                   {settings.focus === 15 || applied ? "Focus rounds set to 15 min" : "Use 15-minute focus rounds"}
                 </button>
               )}
@@ -126,7 +147,7 @@ export default function MoodPage() {
             <div className="sticker-sm bg-surface px-4 py-3">
               <p className="text-sm text-muted">7-day average</p>
               <p className="font-display text-2xl font-bold">
-                {stats.avg ? <>{moodInfo(Math.round(stats.avg)).emoji} {stats.avg.toFixed(1)}</> : "-"}
+                {stats.avg ? <span className="inline-flex items-center gap-2"><MoodFace value={Math.round(stats.avg)} size={28} />{stats.avg.toFixed(1)}</span> : "-"}
               </p>
             </div>
             <div className="sticker-sm bg-surface px-4 py-3">
@@ -160,7 +181,7 @@ export default function MoodPage() {
                 const d = new Date(`${e.date}T12:00:00`);
                 return (
                   <li key={e.date} className="flex items-start gap-3 py-2.5 text-sm">
-                    <span className="text-2xl" aria-hidden="true">{m.emoji}</span>
+                    <MoodFace value={m.value} size={32} className="mt-0.5" />
                     <div className="min-w-0 flex-1">
                       <p className="font-bold">
                         {m.label} <span className="font-normal text-muted">
@@ -168,7 +189,7 @@ export default function MoodPage() {
                         </span>
                       </p>
                       {e.tags.length > 0 && <p className="text-muted">{e.tags.map(tagLabel).join(", ")}</p>}
-                      {e.note && <p className="mt-0.5 break-words">{e.note}</p>}
+                      {e.note && <p className="mt-0.5 whitespace-pre-line break-words">{e.note}</p>}
                     </div>
                     <button onClick={() => remove.mutate(e.date)} aria-label={`Remove check-in for ${e.date}`}
                       className="rounded px-2 py-1 text-muted hover:bg-overdue/10 hover:text-overdue">Remove</button>

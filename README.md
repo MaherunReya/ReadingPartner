@@ -1,8 +1,8 @@
 # Reading Partner
 
-A study platform for university students: turn lecture notes and slides into flashcards, review them with spaced repetition, and manage deadlines, focus sessions, mood, and daily prayers in one dashboard.
+An AI-powered study platform for university students: turn lecture notes and slides into flashcards, review them with spaced repetition, and manage deadlines, focus sessions, mood, and daily prayers in one dashboard.
 
-**Live demo:** https://YOUR-DEMO-URL | **Demo login:** `demo@example.com` / `demo1234`
+**Live demo:** https://readigpartner.vercel.app | **Demo login:** `demo@example.com` / `demo1234`
 
 **Stack:** React 18 · Vite · Tailwind CSS 4 · TanStack Query · FastAPI · SQLAlchemy · PostgreSQL · Gemini API · Stripe
 

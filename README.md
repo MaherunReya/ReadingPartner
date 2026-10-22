@@ -6,8 +6,9 @@ An AI-powered study platform for university students: turn lecture notes and sli
 
 **Stack:** React 18 · Vite · Tailwind CSS 4 · TanStack Query · FastAPI · SQLAlchemy · PostgreSQL · Gemini API · Stripe
 
-![Dashboard](assets/dashboard.png)
-![Flashcard generation](assets/flashcards.png)
+![Dashboard](frontend/assets/dashboard.png)
+
+![Flashcards](frontend/assets/flashcards.png)
 
 ## Features
 

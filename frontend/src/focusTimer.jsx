@@ -8,6 +8,7 @@ export const MODES = {
   long: { label: "Long break" },
 };
 
+const BASE_TITLE = document.title; 
 const SETTINGS_KEY = "studyguide_focus_settings";
 const TIMER_KEY = "studyguide_focus_timer";
 const DEFAULT_SETTINGS = { focus: 25, short: 5, long: 15, sound: true };
@@ -115,12 +116,12 @@ export function FocusProvider({ children }) {
     : timer.status === "paused" ? timer.remaining
     : settings[timer.mode] * 60000;
 
-  useEffect(() => {
-    document.title = timer.status === "idle"
-      ? "Study Guide"
-      : `${formatClock(remainingMs)} ${MODES[timer.mode].label} | Study Guide`;
-    return () => { document.title = "Study Guide"; };
-  }, [timer.status, timer.mode, remainingMs]);
+useEffect(() => {
+  document.title = timer.status === "idle"
+    ? BASE_TITLE
+    : `${formatClock(remainingMs)} ${MODES[timer.mode].label} | ${BASE_TITLE}`;
+  return () => { document.title = BASE_TITLE; };
+}, [timer.status, timer.mode, remainingMs]);
 
   const actions = useMemo(() => ({
     start() {

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import api, { errorMessage } from "../api";
+import { Link } from "react-router-dom";
 import { useBilling } from "../billing";
 import Card from "../components/Card";
 import Icon from "../components/Icon";
@@ -367,11 +368,6 @@ function NotesPanel({ bulk, onDone }) {
           className="btn inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-2 font-display font-semibold text-on-sun disabled:opacity-50">
           {gen.isPending ? "Making cards..." : <><Icon name="sparkle" className="size-4" /> Make flashcards</>}
         </button>
-        {setsLeft !== null && (
-          <span className={`text-xs font-bold ${setsLeft === 0 ? "text-overdue" : "text-muted"}`}>
-            <Icon name="bolt" className="size-3.5" /> {setsLeft} of {sets.limit} AI sets left this month
-          </span>
-        )}
         {gen.isError && <span role="alert" className="text-sm text-overdue">{errorMessage(gen.error)}</span>}
       </div>
 
@@ -470,6 +466,18 @@ function DeckEditor({ deckId, onBack, onStudy }) {
               {deck.subject ? `${deck.subject} \u00B7 ` : ""}{deck.card_count} card{deck.card_count === 1 ? "" : "s"} &middot; {deck.due_count} due
             </p>
           </div>
+          {sets ? (
+          <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border-2 px-3 py-2 text-sm font-bold ${setsLeft === 0 ? "border-overdue text-overdue" : "border-line text-muted"}`}>
+            <Icon name="bolt" className="size-4" />
+            <span>{plan?.name} plan: {setsLeft} of {sets.limit} AI flashcard sets left this month</span>
+            <span className="font-normal">Resets on the 1st.</span>
+            {plan?.id === "free" && (
+              <Link to="/billing" className="ml-auto text-brand-ink underline">Upgrade to Pro for more</Link>
+            )}
+          </div>
+        ) : billing.isError ? (
+          <p className="text-xs text-muted">Couldn't load your AI limit. Try refreshing the page.</p>
+        ) : null}
           <div className="flex flex-wrap gap-2">
             <button onClick={() => setEditing(true)}
               className="btn inline-flex items-center gap-2 rounded-xl bg-surface px-4 py-2.5 font-display text-base font-semibold text-ink"><Icon name="pencil" className="size-4" /> Edit</button>

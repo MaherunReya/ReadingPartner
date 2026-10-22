@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 import models  # noqa: F401  (registers tables on Base)
 from database import Base, engine
-from routers import ai, auth, flashcards, focus, mood, notes, prayers, tasks
+from routers import ai, auth, billing, flashcards, focus, mood, notes, prayers, tasks
 
 load_dotenv()
 
@@ -31,7 +31,7 @@ app.include_router(notes.router)
 app.include_router(mood.router)
 app.include_router(flashcards.router)
 app.include_router(ai.router)
-
+app.include_router(billing.router)
 
 @app.get("/")
 def root():

@@ -1,15 +1,16 @@
+import { useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import api, { errorMessage } from "../api";
 import Card from "../components/Card";
 import Icon from "../components/Icon";
 import { useBilling } from "../billing";
 
+const money = (plan) =>
+  new Intl.NumberFormat([], { style: "currency", currency: plan.currency, maximumFractionDigits: 0 }).format(plan.price);
+
 function resetText(m) {
   const at = new Date(m.resets_at);
-  if (m.period === "day") {
-    const hrs = Math.max(1, Math.ceil((at - Date.now()) / 36e5));
-    return `Refills in about ${hrs}h (midnight)`;
-  }
   return `Refills on ${at.toLocaleDateString([], { month: "short", day: "numeric" })}`;
 }
 
@@ -37,7 +38,6 @@ function Meter({ icon, label, m }) {
 
 function PlanCard({ plan, current, featured, onBuy, buying, canBuy }) {
   const perks = [
-    `${plan.chat_per_day} study buddy messages a day`,
     `${plan.flashcards_per_month} AI flashcard sets a month`,
     `Up to ${plan.max_cards} cards per set`,
     `Notes up to ${plan.max_notes_words.toLocaleString()} words`,
@@ -50,7 +50,7 @@ function PlanCard({ plan, current, featured, onBuy, buying, canBuy }) {
         <Icon name={featured ? "rocket" : "sparkle"} className="mr-2 size-6" />{plan.name}
       </p>
       <p className="mt-2 font-display text-4xl font-bold">
-        <>&#2547;{plan.price_bdt}<span className="text-base font-semibold text-muted">{plan.price_bdt === 0 ? " forever" : " / 30 days"}</span></>
+        <>{money(plan)}<span className="text-base font-semibold text-muted">{plan.price === 0 ? " forever" : " / month"}</span></>
       </p>
       <ul className="mt-4 flex-1 space-y-2 text-sm font-semibold">
         {perks.map((p) => <li key={p} className="flex items-start gap-2"><Icon name="check" className="mt-0.5 size-4 text-done" strokeWidth={2.4} />{p}</li>)}
@@ -77,6 +77,22 @@ export default function BillingPage() {
     mutationFn: () => api.post("/billing/checkout", { plan: "pro" }).then((r) => r.data),
     onSuccess: (d) => { if (d?.url) window.location.assign(d.url); },
   });
+  const portal = useMutation({
+    mutationFn: () => api.post("/billing/portal").then((r) => r.data),
+    onSuccess: (d) => { if (d?.url) window.location.assign(d.url); },
+  });
+
+  // Coming back from Stripe: the webhook can land a moment after the redirect, so check a few times.
+  const [params, setParams] = useSearchParams();
+  const returned = params.get("checkout");
+  useEffect(() => {
+    if (returned !== "success") return;
+    let n = 0;
+    const id = setInterval(() => { refresh(); if (++n >= 8) clearInterval(id); }, 2000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [returned]);
+
   const devActivate = useMutation({ mutationFn: () => api.post("/billing/dev/activate-pro"), onSuccess: refresh });
   const devReset = useMutation({ mutationFn: () => api.post("/billing/dev/reset"), onSuccess: refresh });
 
@@ -93,24 +109,41 @@ export default function BillingPage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold">Plans &amp; AI usage</h1>
-          <p className="mt-1 text-muted">AI costs real money to run, so each plan has a fair daily and monthly allowance.</p>
+          <p className="mt-1 text-muted">AI costs real money to run, so each plan has a fair monthly allowance.</p>
         </div>
         <span className={`sticker-sm inline-flex items-center gap-2 px-4 py-2 font-display text-lg font-bold ${isPro ? "bg-sun text-on-sun" : "bg-surface"}`}>
           <Icon name={isPro ? "rocket" : "sparkle"} className="size-5" /> {isPro ? "Pro" : "Free plan"}
         </span>
       </div>
 
+      {returned === "success" && !isPro && (
+        <div role="status" className="sticker-sm bg-sun px-5 py-3 font-bold text-on-sun">
+          Payment received. Switching you to Pro, this takes a few seconds...
+        </div>
+      )}
+      {returned === "cancelled" && (
+        <div role="status" className="sticker-sm bg-surface px-5 py-3 font-bold">
+          Checkout cancelled. You haven't been charged.
+          <button onClick={() => setParams({})} className="ml-3 underline">Dismiss</button>
+        </div>
+      )}
+
       {isPro && b.period_end && (
         <div role="status" className="sticker-sm bg-mint px-5 py-3 font-bold text-on-sun">
           <Icon name="gift" className="mr-1 size-5" /> Pro is active until {new Date(b.period_end).toLocaleDateString([], { year: "numeric", month: "long", day: "numeric" })}.
           Your data stays safe if it ends. You just go back to Free limits.
+          {b.can_manage && (
+            <button onClick={() => portal.mutate()} disabled={portal.isPending} className="ml-3 underline disabled:opacity-60">
+              {portal.isPending ? "Opening..." : "Manage billing"}
+            </button>
+          )}
         </div>
       )}
+      {portal.isError && <p role="alert" className="text-sm font-bold text-overdue">{errorMessage(portal.error)}</p>}
 
       <section aria-labelledby="usage-h" className="space-y-3">
         <h2 id="usage-h" className="font-display text-xl font-bold">Your AI energy</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Meter icon="chat" label="Study buddy messages today" m={b.usage.chat} />
+        <div className="grid gap-4">
           <Meter icon="cards" label="AI flashcard sets this month" m={b.usage.flashcards} />
         </div>
         <p className="text-xs text-muted">Failed AI requests don't count. Making flashcards by hand never uses your allowance.</p>
@@ -127,9 +160,9 @@ export default function BillingPage() {
 
       <Card title="How it works">
         <ul className="space-y-1.5 text-sm text-muted">
-          <li>Pro lasts 30 days from each payment. Paying early adds days on top, nothing is wasted.</li>
-          <li>Study buddy messages refill every day at midnight (Dhaka time). Flashcard sets refill on the 1st.</li>
-          <li>Longer chats cost more to run, so the study buddy only remembers your most recent messages.</li>
+          <li>Pro renews every month until you cancel. You can cancel or update your card any time from Manage billing.</li>
+          <li>AI flashcard sets refill on the 1st of each month. Cards you make by hand are always unlimited.</li>
+          <li>Payments are handled by Stripe. We never see or store your card details.</li>
         </ul>
       </Card>
 

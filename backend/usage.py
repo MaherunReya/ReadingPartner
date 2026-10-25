@@ -85,7 +85,7 @@ def check(db: Session, user: models.User, plan: dict, kind: str) -> None:
     limit_key, period = KINDS[kind]
     if used(db, user, kind) < plan[limit_key]:
         return
-    what = "AI flashcard sets"
+    what = "AI generations (flashcard sets and tests)"
     when = "this month"
     reset = "They reset on the 1st."
     tail = " Upgrade to Pro for more." if plan["id"] == "free" else ""

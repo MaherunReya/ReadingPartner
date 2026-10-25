@@ -3,6 +3,7 @@ import json
 import os
 import re
 import time
+from typing import Literal
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from google import genai
@@ -119,6 +120,105 @@ def make_flashcards(data: CardsIn, db: Session = Depends(get_db), user: models.U
         raise
     return {"cards": cards}
 
+
+TEST_SYSTEM = (
+    "You write exam questions from lecture notes. Reply with ONLY a JSON array, no other text. "
+    'Every item has "type" ("mc", "tf" or "typed"), "prompt" (the question) and "answer" (the correct answer, short). '
+    'mc items also have "options": exactly 4 different answer choices, one of which equals "answer"; the other 3 are plausible but wrong. '
+    'tf items also have "shown" (a proposed answer to the question) and "is_true" (true when shown is correct; false when shown is a '
+    'plausible wrong answer, in which case "answer" is still the correct one). '
+    'typed items need an "answer" of at most 12 words. '
+    "Test understanding, not just wording: mix definitions with why, how, compare and apply questions. "
+    "Cover different parts of the notes and only ask about things the notes actually say."
+)
+
+
+class TestIn(BaseModel):
+    text: str = Field(min_length=20, max_length=200000)
+    count: int = Field(default=10, ge=3, le=30)
+    type: Literal["mc", "tf", "typed", "mixed"] = "mixed"
+
+
+def _json_list(raw: str):
+    raw = re.sub(r"^```(?:json)?|```$", "", raw.strip(), flags=re.M).strip()
+    try:
+        items = json.loads(raw)
+    except ValueError:
+        match = re.search(r"\[.*\]", raw, re.S)
+        try:
+            items = json.loads(match.group(0)) if match else None
+        except ValueError:
+            items = None
+    return items if isinstance(items, list) else None
+
+
+def _text(v, limit: int) -> str:
+    return v.strip()[:limit] if isinstance(v, str) else ""
+
+
+def _parse_questions(raw: str, limit: int, want: str) -> list[dict]:
+    items = _json_list(raw)
+    if items is None:
+        raise HTTPException(502, "The AI's answer was garbled. Try again.")
+    out = []
+    for it in items:
+        if not isinstance(it, dict):
+            continue
+        kind, prompt, answer = it.get("type"), _text(it.get("prompt"), 1000), _text(it.get("answer"), 500)
+        if kind not in ("mc", "tf", "typed") or not prompt or not answer or (want != "mixed" and kind != want):
+            continue
+        if kind == "mc":
+            raw_opts = it.get("options") if isinstance(it.get("options"), list) else []
+            wrong, seen = [], {answer.lower()}
+            for o in raw_opts:
+                o = _text(o, 500)
+                if o and o.lower() not in seen:
+                    seen.add(o.lower())
+                    wrong.append(o)
+            if len(wrong) < 2:
+                continue
+            out.append({"type": "mc", "prompt": prompt, "answer": answer, "options": wrong[:3] + [answer]})
+        elif kind == "tf":
+            shown, is_true = _text(it.get("shown"), 500), it.get("is_true")
+            if not shown or not isinstance(is_true, bool):
+                continue
+            if is_true:
+                shown = answer
+            elif shown.lower() == answer.lower():
+                continue
+            out.append({"type": "tf", "prompt": prompt, "answer": answer, "shown": shown, "is_true": is_true})
+        else:
+            out.append({"type": "typed", "prompt": prompt, "answer": answer})
+    if not out:
+        raise HTTPException(502, "Couldn't make questions from that. Try more detailed notes.")
+    return out[:limit]
+
+
+@router.post("/test")
+def make_test(data: TestIn, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    """Questions written from a lecture or PDF, independent of any flashcards.
+
+    Shares the monthly AI allowance with flashcard sets (both are one AI call)."""
+    plan = usage.plan_for(db, user)
+    words = count_words(data.text)
+    if words > plan["max_notes_words"]:
+        raise HTTPException(
+            422,
+            f"Notes can be up to {plan['max_notes_words']:,} words and yours has {words:,}. Split the lecture into parts.",
+        )
+    usage.check(db, user, plan, "flashcards")
+
+    count = min(data.count, plan["max_cards"])
+    style = "a mix of multiple choice (mc), true/false (tf) and typed-answer (typed) questions" if data.type == "mixed" else f'only "{data.type}" questions'
+    prompt = f"Write {count} questions, {style}, from these lecture notes:\n\n{data.text}"
+    row = usage.record(db, user, "flashcards")
+    try:
+        raw = _ask(TEST_SYSTEM, [{"role": "user", "content": prompt}], 8000)
+        questions = _parse_questions(raw, count, data.type)
+    except Exception:
+        usage.refund(db, row)
+        raise
+    return {"questions": questions}
 
 MAX_UPLOAD = 15 * 1024 * 1024  # 15 MB
 

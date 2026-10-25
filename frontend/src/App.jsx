@@ -11,6 +11,7 @@ import FlashcardsPage from "./pages/FlashcardsPage";
 import BillingPage from "./pages/BillingPage";
 import MoodPage from "./pages/MoodPage";
 import NotesPage from "./pages/NotesPage";
+import TestsPage from "./pages/TestsPage";
 
 function GuestRoute({ children }) {
   const { token } = useAuth();
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="/prayers" element={<Prayers />} />
         <Route path="/billing" element={<BillingPage />} />
         <Route path="/mood" element={<MoodPage />} />
+        <Route path="/tests" element={<TestsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

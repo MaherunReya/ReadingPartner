@@ -10,6 +10,7 @@ import ThemeToggle from "./ThemeToggle";
 const LINKS = [
   { to: "/dashboard", label: "Dashboard" },
   { to: "/flashcards", label: "Flashcards" },
+  { to: "/tests", label: "Tests" },
   { to: "/mood", label: "Mood" },
   { to: "/notes", label: "Notes" },
   { to: "/focus", label: "Focus" },
@@ -42,7 +43,7 @@ function Shell() {
   return (
     <div className="min-h-screen">
       <header className="border-b-2 border-edge bg-surface">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 sm:px-6 lg:px-8">
           <LogoLink />
           <nav className="flex w-full gap-1 overflow-x-auto sm:w-auto" aria-label="Main">
             {LINKS.map((l) => (
@@ -66,7 +67,7 @@ function Shell() {
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-4 py-8">
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <Outlet />
       </main>
     </div>

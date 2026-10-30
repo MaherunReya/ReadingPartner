@@ -153,16 +153,3 @@ npm run dev
 Open `http://localhost:5173`. To point at a different backend, set `VITE_API_URL` (defaults to `http://localhost:8000`).
 
 ## Tests and performance
-
-<!-- Fill in once measured, then delete this comment:
-- `pytest` : [X] tests, [X]% coverage
-- Load test (k6): [X] concurrent users, p95 latency under [X] ms
--->
-
-## Roadmap
-
-- [ ] Alembic migrations (currently `create_all`)
-- [ ] Automated tests and CI (GitHub Actions)
-- [ ] Notes per subject
-- [ ] Study planner built around exam dates and prayer times
-- [ ] Installable PWA

@@ -1,134 +1,204 @@
+
 # Reading Partner
 
-An AI-powered study platform for university students: turn lecture notes and slides into flashcards, review them with spaced repetition, and manage deadlines, focus sessions, mood, and daily prayers in one dashboard.
+A study and revision management platform for university students. Organize coursework, manage deadlines, track study progress, and turn lecture materials into revision resources.
 
-**Live demo:** https://readigpartner.vercel.app | **Demo login:** `demo@example.com` / `demo1234`
+Reading Partner brings everyday study activities into one place. Students can manage academic tasks, create flashcards from their notes, review them using a Leitner-based spaced repetition system, and keep track of their study routines.
 
-**Stack:** React 18 · Vite · Tailwind CSS 4 · TanStack Query · FastAPI · SQLAlchemy · PostgreSQL · Gemini API · Stripe
+**Live demo:** https://readigpartner.vercel.app  
+**Demo login:** `demo@example.com` / `demo1234`
 
-![Dashboard](frontend/assets/dashboard.png)
+**Tech stack:** React 18 · Vite · Tailwind CSS 4 · TanStack Query · FastAPI · SQLAlchemy · PostgreSQL · Gemini API · Stripe
+
+![Reading Partner Dashboard](frontend/assets/dashboard.png)
 
 ![Flashcards](frontend/assets/flashcards.png)
 
 ## Features
 
-- **AI flashcards:** paste notes or upload a PDF/PowerPoint lecture, and the Gemini API generates flashcards from it.
-- **Spaced repetition:** box-based (Leitner) scheduling; cards you know move to later boxes and come back less often, missed cards return sooner.
-- **Task management:** create tasks with a subject and deadline, filter by status or subject, and see overdue and due-this-week work at a glance.
-- **Progress tracking:** completion ring, 7-day activity chart, per-subject progress bars, and a daily completion streak.
-- **Focus timer:** Pomodoro-style sessions for study blocks.
-- **Mood tracking:** log how you feel each day.
-- **Prayer tracker:** daily prayer times by city (via the [Aladhan API](https://aladhan.com/prayer-times-api)), configurable calculation method and school, five-prayer checklist, 60-day history, and a full-day streak. Toggles use optimistic updates.
-- **Subscriptions:** Stripe plans with per-plan limits on AI usage.
-- **Email verification:** signup sends a 6-digit OTP before the account can log in.
-- **Light/dark theme** that follows the system preference and remembers your choice.
-- **Responsive UI** for phones and laptops.
+### Study and revision
+
+- **Flashcard generation:** Generate flashcards from pasted lecture notes or uploaded PDF and PowerPoint files using the Gemini API.
+- **Quiz generation:** Generate quizzes from study materials to support self-assessment.
+- **Spaced repetition:** Uses the Leitner box-based scheduling method. Correctly answered cards move to later boxes and appear less frequently, while missed cards return sooner.
+- **Review tracking:** Access flashcards due for review and record review results to update their scheduling.
+
+### Study organization
+
+- **Task management:** Create tasks with subjects and deadlines, filter by completion status or subject, and identify overdue and upcoming work.
+- **Progress tracking:** View a completion ring, 7-day activity chart, per-subject progress bars, and daily completion streak.
+- **Focus timer:** Use Pomodoro-style sessions to structure study periods.
+- **Mood tracking:** Record daily mood.
+
+### Daily routine
+
+- **Prayer tracker:** View prayer times based on city using the [Aladhan Prayer Times API](https://aladhan.com/prayer-times-api).
+  - Configurable calculation method and school.
+  - Five-prayer daily checklist.
+  - 60-day prayer history.
+  - Daily completion streak.
+  - Optimistic updates for prayer toggles.
+
+### Account and application
+
+- **Email verification:** New accounts require a 6-digit OTP before login.
+- **Authentication:** JWT-based authentication and password hashing with bcrypt.
+- **Subscriptions:** Stripe checkout and subscription management with server-enforced AI usage limits per plan.
+- **Themes:** Light and dark themes, following system preferences by default and remembering the user's choice.
+- **Responsive interface:** Designed for both mobile and desktop screens.
 
 ## Architecture
 
-```
-React (Vite, TanStack Query)
-        |
-        v
-   FastAPI  ------>  PostgreSQL (SQLAlchemy)
-     |   |
-     |   +-------->  Gemini API   (flashcard generation)
-     |   +-------->  Stripe       (subscriptions, webhooks)
-     +------------>  SMTP         (verification emails)
+```text
+                 React (Vite, TanStack Query)
+                            |
+                            v
+                         FastAPI
+                            |
+             +--------------+--------------+
+             |              |              |
+             v              v              v
+        PostgreSQL       Gemini API      Stripe
+        (SQLAlchemy)   (AI generation)  (Billing)
+                            |
+                            |
+                           SMTP
+                    (Verification emails)
 
 Hosting: Vercel (frontend + API), managed PostgreSQL
 ```
 
-**Key decisions**
+### Key engineering decisions
 
-- **AI usage limits are enforced on the server per plan**, so the frontend can't bypass them and Gemini costs stay predictable.
-- **Lecture files are parsed on the server**, and the extracted text is what gets sent to Gemini.
-- **Server state lives in TanStack Query** with optimistic updates for quick interactions like prayer toggles.
-- **Every query is scoped to the authenticated user.**
+- **Server-side AI usage enforcement:** AI usage limits are checked on the backend according to each user's subscription plan, preventing frontend-only restrictions from being bypassed.
+- **Server-side file processing:** Uploaded lecture files are parsed on the backend, and extracted text is passed to the Gemini API for content generation.
+- **Server state management:** TanStack Query manages server state, with optimistic updates for interactions such as prayer tracking.
+- **User-scoped data access:** Authenticated user context is used to scope application queries and operations.
+- **Idempotent prayer updates:** Prayer completion endpoints support repeated requests without creating duplicate state changes.
 
 ## Security
 
-- Passwords hashed with **bcrypt**; JWT access tokens (`HS256`) with configurable expiry.
-- Verification codes are stored only as **hashes**, expire after a set time, and lock out after 5 wrong attempts.
-- Resend cooldown, and a uniform response on resend so the endpoint can't be used to discover which emails are registered.
-- Secrets live in `.env` (gitignored); CORS origins are configurable.
+- Passwords are hashed using **bcrypt**.
+- JWT access tokens use **HS256** with configurable expiration.
+- Email verification codes are stored as hashes and expire after a configurable period.
+- Verification attempts are limited, with account verification locked after five incorrect attempts.
+- Resend verification requests have a cooldown.
+- The resend endpoint uses a uniform response to reduce email-account enumeration.
+- Application secrets are stored in environment variables, with `.env` excluded from version control.
+- CORS origins are configurable.
 
 ## Project structure
 
-```
+```text
 .
 ├── backend/
-│   ├── main.py            # FastAPI app, CORS, router registration
-│   ├── models.py          # SQLAlchemy models
-│   ├── schemas.py         # Pydantic request/response schemas
-│   ├── security.py        # Password hashing, JWT, OTP helpers
-│   ├── dependencies.py    # get_current_user
-│   ├── email_service.py   # SMTP sender (falls back to console in dev)
-│   └── routers/           # auth, tasks, prayers, flashcards, billing, ...
+│   ├── main.py              # FastAPI app, CORS, router registration
+│   ├── models.py            # SQLAlchemy models
+│   ├── schemas.py           # Pydantic request/response schemas
+│   ├── security.py          # Password hashing, JWT, OTP helpers
+│   ├── dependencies.py      # Authentication dependencies
+│   ├── email_service.py     # SMTP sender
+│   └── routers/             # Auth, tasks, prayers, flashcards, billing, etc.
+│
 └── frontend/
     └── src/
-        ├── pages/         # Home, AuthPage, VerifyEmail, Dashboard, Flashcards, Prayers
-        ├── components/    # TaskForm, TaskItem, ProgressRing, WeekChart, ...
-        ├── api.js         # Axios client with auth + 401 handling
-        └── prayers.js     # Prayer-time fetching, logging hooks, streak logic
+        ├── pages/           # Home, AuthPage, VerifyEmail, Dashboard,
+        │                    # Flashcards, Prayers
+        ├── components/      # TaskForm, TaskItem, ProgressRing,
+        │                    # WeekChart, etc.
+        ├── api.js           # Axios client with authentication and 401 handling
+        └── prayers.js       # Prayer-time fetching, logging hooks, streak logic
 ```
 
 ## API overview
 
 | Method | Endpoint | Description |
-| --- | --- | --- |
-| POST | `/auth/signup` | Create an account and email a verification code |
-| POST | `/auth/verify-email` | Verify the account with the OTP |
-| POST | `/auth/resend-verification` | Request a new code (rate-limited) |
-| POST | `/auth/login` | Get an access token (verified accounts only) |
-| GET | `/auth/me` | Current user |
-| GET / POST | `/tasks` | List (filter by `subject`, `completed`) / create |
-| GET / PATCH / DELETE | `/tasks/{id}` | Read / update / delete a task |
-| GET | `/prayers?start=&end=` | Prayer logs in a date range |
-| PUT | `/prayers/{date}/{prayer}` | Mark a prayer done or not (idempotent) |
+|---|---|---|
+| POST | `/auth/signup` | Create an account and send a verification code |
+| POST | `/auth/verify-email` | Verify an account using an OTP |
+| POST | `/auth/resend-verification` | Request a new verification code |
+| POST | `/auth/login` | Authenticate a verified account |
+| GET | `/auth/me` | Retrieve the current user |
+| GET / POST | `/tasks` | List or create tasks |
+| GET / PATCH / DELETE | `/tasks/{id}` | Retrieve, update, or delete a task |
+| GET | `/prayers?start=&end=` | Retrieve prayer logs within a date range |
+| PUT | `/prayers/{date}/{prayer}` | Mark a prayer as completed or not completed |
 | POST | `/flashcards/generate` | Generate flashcards from notes or an uploaded file |
-| GET | `/flashcards/review` | Cards due for review today |
-| POST | `/flashcards/{id}/review` | Record a review result and move the card between boxes |
+| GET | `/flashcards/review` | Retrieve flashcards due for review |
+| POST | `/flashcards/{id}/review` | Record a review result and update its Leitner box |
 | POST | `/billing/checkout` | Start a Stripe checkout session |
-| POST | `/billing/webhook` | Stripe webhook (subscription status) |
+| POST | `/billing/webhook` | Handle Stripe subscription updates |
 
-Interactive docs are available at `http://localhost:8000/docs` when the backend is running.
+Interactive API documentation is available at `http://localhost:8000/docs` when the backend is running.
 
 ## Getting started
 
-**Prerequisites:** Python 3.10+, Node.js 18+, PostgreSQL, a Gemini API key, and (optional) a Stripe test account
+### Prerequisites
 
-### 1. Database
+- Python 3.10+
+- Node.js 18+
+- PostgreSQL
+- Gemini API key (for flashcard and quiz generation)
+- Stripe test account (optional, for local billing integration)
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/MaherunReya/ReadingPartner.git
+cd ReadingPartner
+```
+
+### 2. Create the database
+
+In PostgreSQL, create a database:
 
 ```sql
 CREATE DATABASE reading_partner;
 ```
 
-### 2. Backend
+### 3. Set up the backend
+
+Create and activate a virtual environment:
 
 ```bash
 cd backend
+
 python -m venv venv
-venv\Scripts\activate          # Windows (macOS/Linux: source venv/bin/activate)
+
+# Windows
+venv\Scripts\activate
+
+# macOS / Linux
+source venv/bin/activate
+```
+
+Install dependencies:
+
+```bash
 pip install -r requirements.txt
 ```
 
-Create `backend/.env`:
+Create a `backend/.env` file:
 
 ```env
 DATABASE_URL=postgresql://USER:PASSWORD@localhost:5432/reading_partner
+
 SECRET_KEY=change-me-to-a-long-random-string
 ACCESS_TOKEN_EXPIRE_MINUTES=1440
+
 CORS_ORIGINS=http://localhost:5173
+
 OTP_EXPIRE_MINUTES=10
 
-GEMINI_API_KEY=your-gemini-key
+# Gemini API
+GEMINI_API_KEY=your-gemini-api-key
 
 # Stripe (use test keys locally)
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 
-# Optional. If SMTP_HOST is unset, verification emails are printed to the console.
+# Optional SMTP configuration.
+# If SMTP_HOST is unset, verification emails are printed to the console.
 SMTP_HOST=
 SMTP_PORT=587
 SMTP_USER=
@@ -136,20 +206,65 @@ SMTP_PASSWORD=
 SMTP_FROM=
 ```
 
-Run it (tables are created on startup):
+Start the backend:
 
 ```bash
 uvicorn main:app --reload
 ```
 
-### 3. Frontend
+The application creates database tables on startup.
+
+The API will be available at:
+
+```text
+http://localhost:8000
+```
+
+### 4. Set up the frontend
+
+Open another terminal:
 
 ```bash
 cd frontend
+
 npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`. To point at a different backend, set `VITE_API_URL` (defaults to `http://localhost:8000`).
+The frontend will be available at:
+
+```text
+http://localhost:5173
+```
+
+To connect to a different backend, configure `VITE_API_URL`. It defaults to `http://localhost:8000`.
 
 ## Tests and performance
+
+The project includes a local load test using k6 against authenticated REST endpoints.
+
+| Metric | Result |
+|---|---:|
+| Total requests | 9,000+ |
+| Concurrent virtual users | 10 |
+| HTTP error rate | 0% |
+| 95th percentile latency | 91 ms |
+
+These results represent a local test configuration and should not be interpreted as production-scale performance benchmarks.
+
+## Known limitations
+
+- **Gemini API quota:** Flashcard and quiz generation depend on the Gemini API. The free-tier quota is limited, so generation may become temporarily unavailable when the quota is exhausted.
+- **External services:** Email verification, payment processing, prayer-time retrieval, and AI generation depend on their respective external services and configurations.
+- **Stripe integration:** A Stripe test account and webhook configuration are required to test the billing workflow locally.
+
+## Future improvements
+
+- Improve AI generation reliability and provide clearer feedback when API limits are reached.
+- Explore alternative or local approaches to flashcard and quiz generation.
+- Expand revision analytics and study progress insights.
+- Improve the overall revision workflow and user experience.
+
+---
+
+**Built as a full-stack project using React, FastAPI, and PostgreSQL.**

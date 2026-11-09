@@ -5,7 +5,7 @@ A study and revision management platform for university students. Organize cours
 
 Reading Partner brings everyday study activities into one place. Students can manage academic tasks, create flashcards from their notes, review them using a Leitner-based spaced repetition system, and keep track of their study routines.
 
-**Live demo:** https://readigpartner.vercel.app  
+**Live demo:** https://readingpartner.vercel.app  
 **Demo login:** `demo@example.com` / `demo1234`
 
 **Tech stack:** React 18 · Vite · Tailwind CSS 4 · TanStack Query · FastAPI · SQLAlchemy · PostgreSQL · Gemini API · Stripe

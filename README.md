@@ -191,6 +191,7 @@ CORS_ORIGINS=http://localhost:5173
 OTP_EXPIRE_MINUTES=10
 
 # Gemini API
+# Optional: Gemini API for flashcard and quiz generation
 GEMINI_API_KEY=your-gemini-api-key
 
 # Stripe (use test keys locally)

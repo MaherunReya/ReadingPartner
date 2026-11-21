@@ -11,7 +11,8 @@ load_dotenv()
 
 app = FastAPI(title="AI Study OS API")
 
-origins = ["https://readingpartner.vercel.app", "http://localhost:5173"]app.add_middleware(
+origins = ["https://readingpartner.vercel.app", "http://localhost:5173"]
+app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,

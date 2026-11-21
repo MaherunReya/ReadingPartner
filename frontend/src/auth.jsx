@@ -11,6 +11,10 @@ export function AuthProvider({ children }) {
     const body = new URLSearchParams({ username: email, password });
     const { data } = await api.post("/auth/login", body);
     localStorage.setItem(TOKEN_KEY, data.access_token);
+    // A deactivated account comes back on login. The app shows a "welcome back" note once.
+    if (data.reactivated) {
+      try { sessionStorage.setItem("studyguide_reactivated", "1"); } catch { /* ignore */ }
+    }
     setToken(data.access_token);
   }
 

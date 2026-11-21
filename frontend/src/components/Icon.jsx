@@ -31,6 +31,7 @@ const PATHS = {
   heart: <path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.2 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z" />,
   rocket: <><path d="M14.5 4.5c3.5-.5 5 1 5 1s1.5 1.5 1 5L15 16l-4.5-4.5z" /><path d="M10.5 11.5L7 12l-2.5 2.5L8 15M12.5 16.5L12 20l2.5-2.5L15 14M5 19l-1.5 1.5" /></>,
   search: <><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" /></>,
+    settings: <><path d="M4 7h9M17 7h3M4 17h3M11 17h9" /><circle cx="15" cy="7" r="2" /><circle cx="9" cy="17" r="2" /></>,
 };
 
 export default function Icon({ name, className = "size-5", filled = false, strokeWidth = 1.8 }) {

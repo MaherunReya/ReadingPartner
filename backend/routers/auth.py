@@ -111,8 +111,7 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    if not user.is_active:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is disabled")
+    reactivated = not user.is_active
     if not user.is_verified:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -122,7 +121,10 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
             },
         )
 
-    return schemas.Token(access_token=create_access_token(user.id))
+    if reactivated:
+        user.is_active = True
+        db.commit()
+    return schemas.Token(access_token=create_access_token(user.id), reactivated=reactivated)
 
 
 @router.get("/me", response_model=schemas.UserOut)

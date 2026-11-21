@@ -41,6 +41,7 @@ class UserOut(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    reactivated: bool = False 
 
 
 class EmailRequest(BaseModel):
@@ -245,3 +246,40 @@ class CardOut(BaseModel):
 
 class ReviewIn(BaseModel):
     correct: bool
+
+def _fits_bcrypt(v: str) -> str:
+# bcrypt only uses the first 72 bytes
+    if len(v.encode("utf-8")) > 72:
+        raise ValueError("Password must be at most 72 bytes")
+    return v
+
+
+class ProfileUpdate(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+
+    @field_validator("name")
+    @classmethod
+    def name_not_blank(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("Name is required")
+        return v
+
+
+class PasswordChange(BaseModel):
+    current_password: str = Field(min_length=1, max_length=200)
+    new_password: str = Field(min_length=8)
+
+    @field_validator("new_password")
+    @classmethod
+    def new_password_fits_bcrypt(cls, v: str) -> str:
+        return _fits_bcrypt(v)
+
+
+class PasswordConfirm(BaseModel):
+    password: str = Field(min_length=1, max_length=200)
+
+
+class DeleteAccount(BaseModel):
+    password: str = Field(min_length=1, max_length=200)
+    confirm: Literal["DELETE"]

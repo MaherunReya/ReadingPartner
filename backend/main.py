@@ -3,13 +3,12 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-import models  # noqa: F401  (registers tables on Base)
+import models 
 from database import Base, engine
-from routers import ai, auth, billing, flashcards, focus, mood, notes, prayers, tasks
-
+from routers import account, ai, auth, billing, flashcards, focus, mood, notes, prayers, tasks
 load_dotenv()
 
-app = FastAPI(title="AI Study OS API")
+app = FastAPI(title="Reading Partner")
 
 origins = ["https://readingpartner.vercel.app", "http://localhost:5173"]
 app.add_middleware(
@@ -32,6 +31,7 @@ app.include_router(mood.router)
 app.include_router(flashcards.router)
 app.include_router(ai.router)
 app.include_router(billing.router)
+app.include_router(account.router)
 
 @app.get("/")
 def root():
